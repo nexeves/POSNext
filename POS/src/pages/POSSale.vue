@@ -1450,6 +1450,7 @@ onMounted(async () => {
 
 		const backgroundOps = Promise.allSettled([
 			cartStore.setDefaultCustomer(),
+			customerSearchStore.loadAllCustomers(shiftStore.profileName, true),
 			offlineStore.isOffline
 				? offlineStore.checkOfflineCacheAvailability()
 				: offlineStore.preloadDataForOffline(shiftStore.currentProfile),
@@ -1786,6 +1787,7 @@ async function handleShiftOpened() {
 
 	const backgroundOps = Promise.allSettled([
 		cartStore.setDefaultCustomer(),
+		customerSearchStore.loadAllCustomers(shiftStore.profileName, true),
 		offlineStore.isOffline
 			? offlineStore.checkOfflineCacheAvailability()
 			: offlineStore.preloadDataForOffline(shiftStore.currentProfile),

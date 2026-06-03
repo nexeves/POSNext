@@ -106,6 +106,7 @@ import { useSessionLock } from "../composables/useSessionLock"
 import { cleanupUserSession } from "../utils/sessionCleanup"
 import { ensureCSRFToken } from "../utils/csrf"
 import { offlineWorker } from "../utils/offline/workerClient"
+import { useCustomerSearchStore } from "@/stores/customerSearch"
 import { logger } from "@/utils/logger"
 
 const log = logger.create("Login")
@@ -157,6 +158,8 @@ watch(
 	() => session.isLoggedIn,
 	async (isLoggedIn) => {
 		if (isLoggedIn) {
+			customerSearchStore.resetState()
+
 			// Initialize CSRF token after successful login
 			try {
 				log.info("User logged in, initializing CSRF token...")
