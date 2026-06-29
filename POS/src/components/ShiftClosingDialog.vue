@@ -131,8 +131,70 @@
 								</div>
 								<div class="text-gray-600 text-xs">{{ __("Net tax") }}</div>
 							</div>
+							<div
+								class="text-start bg-red-50 border border-red-200 rounded-lg p-3 md:p-4"
+							>
+								<div class="text-red-600 text-xs uppercase font-medium mb-1">
+									{{ __("Expenses") }}
+								</div>
+
+								<div
+									class="text-lg md:text-2xl font-bold text-red-700 mb-0.5 md:mb-1 truncate"
+								>
+									{{ formatCurrency(totalExpense) }}
+								</div>
+
+								<div class="text-red-500 text-xs">
+									{{ __("Shift Expenses") }}
+								</div>
+							</div>
+						</div>
+						<div
+							v-if="expenses?.length"
+							class="rounded-lg border border-red-200 bg-red-50 p-4 mt-4"
+						>
+							<div class="font-semibold text-red-700 mb-3">
+								{{ __("Shift Expenses") }}
+							</div>
+
+							<div
+								v-for="expense in expenses"
+								:key="expense.name"
+								class="flex justify-between py-2 border-b border-red-100"
+							>
+								<div>
+									<div class="font-medium">
+										{{ expense.name }}
+									</div>
+
+									<div class="text-xs text-gray-500">
+										{{ expense.user_remark }}
+									</div>
+
+                  <div class="text-xs text-blue-600">
+                      {{ expense.mode_of_payment }}
+                  </div>
+								</div>
+
+								<div class="font-medium text-red-600">
+									{{ formatCurrency(expense.total_debit) }}
+								</div>
+							</div>
+
+							<div
+								class="flex justify-between pt-3 mt-3 font-bold"
+							>
+								<span>
+									{{ __("Total Expenses") }}
+								</span>
+
+								<span class="text-red-600">
+									{{ formatCurrency(totalExpense) }}
+								</span>
+							</div>
 						</div>
 					</div>
+					
 
 					<!-- No Sales Warning (hidden in entry mode when hideExpectedAmount is enabled) -->
 					<div
@@ -629,6 +691,13 @@
 											>
 												{{ formatCurrency(payment.expected_amount) }}
 											</div>
+                      <div
+                        v-if="payment.expense_amount > 0"
+                        class="text-xs text-red-600 mt-1"
+                      >
+                        {{ __("Less Expenses") }}:
+                        {{ formatCurrency(payment.expense_amount) }}
+                      </div>
 											<div
 												class="text-xs text-gray-500 mt-0.5 md:mt-1 hidden sm:block"
 											>
@@ -979,7 +1048,6 @@ import { useFormatters } from "../composables/useFormatters";
 import { useToast } from "../composables/useToast";
 import { usePOSSettingsStore } from "../stores/posSettings";
 import { usePOSShiftStore } from "../stores/posShift";
-import { printEODReport } from "../utils/printEod";
 import TranslatedHTML from "./common/TranslatedHTML.vue";
 
 const props = defineProps({
@@ -1012,6 +1080,13 @@ const shiftStore = usePOSShiftStore();
 const closingData = ref(null);
 const closingDataResource = getClosingShiftData;
 const submitResource = submitClosingShift;
+import { createResource } from "frappe-ui";
+const expenses = ref([]);
+const totalExpense = ref(0);
+const shiftExpensesResource = createResource({
+	url: "pos_next.api.expense_entry.get_shift_expenses",
+	auto: false,
+});
 const showInvoiceDetails = ref(false);
 const showSuccessReport = ref(false); // Track if shift is closed and showing report
 const errorMessage = ref(""); // User-friendly error message
@@ -1034,7 +1109,8 @@ watch(open, async (isOpen) => {
 
 		// Refresh POS settings to get latest hideExpectedAmount value
 		await posSettingsStore.reloadSettings();
-		loadClosingData();
+		await loadClosingData();
+		await loadExpenses();
 	} else {
 		// Resume the shift duration counter
 		shiftStore.shiftTimerPaused = false;
@@ -1090,6 +1166,23 @@ async function loadClosingData() {
 		console.error("Error loading closing data:", error);
 		errorMessage.value =
 			"Unable to load shift data. Please check your connection and try again.";
+	}
+}
+async function loadExpenses() {
+	try {
+		const result = await shiftExpensesResource.submit({
+			opening_shift: props.openingShift,
+		});
+
+		expenses.value = result?.expenses || [];
+		totalExpense.value = result?.total_expense || 0;
+
+		applyExpensesToReconciliation();
+	} catch (error) {
+		console.error("Error loading expenses", error);
+
+		expenses.value = [];
+		totalExpense.value = 0;
 	}
 }
 
@@ -1245,6 +1338,12 @@ const grossSales = computed(() => {
 	if (!closingData.value) return 0;
 	return closingData.value.sales_total ?? closingData.value.grand_total ?? 0;
 });
+const totalExpenses = computed(() => {
+    return closingData.value?.total_expense || 0;
+});
+const netSales = computed(() => {
+	return grossSales.value - totalExpense.value;
+});
 const getTotalExpected = computed(() => {
 	if (!closingData.value || !closingData.value.payment_reconciliation) return 0;
 	return closingData.value.payment_reconciliation.reduce(
@@ -1319,5 +1418,37 @@ function getPaymentIcon(method) {
 	} else {
 		return { icon: "💰", color: "bg-gray-500" };
 	}
+}
+function applyExpensesToReconciliation() {
+	if (
+		!closingData.value ||
+		!closingData.value.payment_reconciliation ||
+		!expenses.value.length
+	) {
+		return;
+	}
+
+	closingData.value.payment_reconciliation.forEach((payment) => {
+		payment.expense_amount = 0;
+	});
+
+	expenses.value.forEach((expense) => {
+		const modeOfPayment = expense.mode_of_payment;
+		const amount = Number(expense.total_debit || 0);
+
+		const paymentRow = closingData.value.payment_reconciliation.find(
+			(row) => row.mode_of_payment === modeOfPayment
+		);
+
+		if (paymentRow) {
+			paymentRow.expense_amount =
+				(paymentRow.expense_amount || 0) + amount;
+
+			paymentRow.expected_amount =
+				Number(paymentRow.expected_amount || 0) - amount;
+
+			calculateDifference(paymentRow);
+		}
+	});
 }
 </script>
