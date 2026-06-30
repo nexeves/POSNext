@@ -1367,7 +1367,8 @@ const getTotalDifference = computed(() => {
 function getSalesForPayment(payment) {
 	return (
 		Number.parseFloat(payment.expected_amount || 0) -
-		Number.parseFloat(payment.opening_amount || 0)
+		Number.parseFloat(payment.opening_amount || 0)+
+		Number.parseFloat(payment.expense_amount || 0)
 	);
 }
 
@@ -1419,6 +1420,10 @@ function getPaymentIcon(method) {
 		return { icon: "💰", color: "bg-gray-500" };
 	}
 }
+function normalizeMode(mode) {
+	return (mode || "").toString().trim().toLowerCase();
+}
+
 function applyExpensesToReconciliation() {
 	if (
 		!closingData.value ||
@@ -1433,14 +1438,14 @@ function applyExpensesToReconciliation() {
 	});
 
 	expenses.value.forEach((expense) => {
-		const modeOfPayment = expense.mode_of_payment;
-		const amount = Number(expense.total_debit || 0);
+		const modeOfPayment = normalizeMode(expense.mode_of_payment);
+		const amount = Number(expense.total_debit ?? expense.amount ?? 0);
 
 		const paymentRow = closingData.value.payment_reconciliation.find(
-			(row) => row.mode_of_payment === modeOfPayment
+			(row) => normalizeMode(row.mode_of_payment) === modeOfPayment
 		);
 
-		if (paymentRow) {
+		if (paymentRow && amount) {
 			paymentRow.expense_amount =
 				(paymentRow.expense_amount || 0) + amount;
 
