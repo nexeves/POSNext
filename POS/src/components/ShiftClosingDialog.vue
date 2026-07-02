@@ -692,11 +692,11 @@
 												{{ formatCurrency(payment.expected_amount) }}
 											</div>
                       <div
-                        v-if="payment.expense_amount > 0"
+                        v-if="payment.custom_expense_amount > 0"
                         class="text-xs text-red-600 mt-1"
                       >
                         {{ __("Less Expenses") }}:
-                        {{ formatCurrency(payment.expense_amount) }}
+                        {{ formatCurrency(payment.custom_expense_amount) }}
                       </div>
 											<div
 												class="text-xs text-gray-500 mt-0.5 md:mt-1 hidden sm:block"
@@ -1175,6 +1175,14 @@ async function loadExpenses() {
 		});
 
 		expenses.value = result?.expenses || [];
+		if (closingData.value) {
+			closingData.value.custom_expense_summary = expenses.value.map((expense) => ({
+				journal_entry: expense.name,
+				mode_of_payment: expense.mode_of_payment,
+				amount: expense.total_debit,
+				doctype: "POS Closing Shift Expense",
+			}));
+		}
 		totalExpense.value = result?.total_expense || 0;
 
 		applyExpensesToReconciliation();
@@ -1368,7 +1376,7 @@ function getSalesForPayment(payment) {
 	return (
 		Number.parseFloat(payment.expected_amount || 0) -
 		Number.parseFloat(payment.opening_amount || 0)+
-		Number.parseFloat(payment.expense_amount || 0)
+		Number.parseFloat(payment.custom_expense_amount || 0)
 	);
 }
 
@@ -1434,7 +1442,7 @@ function applyExpensesToReconciliation() {
 	}
 
 	closingData.value.payment_reconciliation.forEach((payment) => {
-		payment.expense_amount = 0;
+		payment.custom_expense_amount = 0;
 	});
 
 	expenses.value.forEach((expense) => {
@@ -1446,9 +1454,8 @@ function applyExpensesToReconciliation() {
 		);
 
 		if (paymentRow && amount) {
-			paymentRow.expense_amount =
-				(paymentRow.expense_amount || 0) + amount;
-
+			paymentRow.custom_expense_amount =
+				(paymentRow.custom_expense_amount || 0) + amount;
 			paymentRow.expected_amount =
 				Number(paymentRow.expected_amount || 0) - amount;
 
