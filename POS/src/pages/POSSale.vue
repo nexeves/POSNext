@@ -209,6 +209,27 @@
 						</svg>
 						<span>{{ __("Close Shift") }}</span>
 					</button>
+					<button
+						v-if="canAccessShiftActions"
+						@click="showExpenseDialog = true"
+						class="w-full text-start px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 flex items-center gap-3 transition-colors"
+					>
+						<svg
+							class="w-5 h-5 text-orange-600"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M12 8c-1.1 0-2 .9-2 2v8h4v-8c0-1.1-.9-2-2-2zM7 4h10v4H7V4z"
+							/>
+						</svg>
+
+						<span>{{ __("Expense Entry") }}</span>
+					</button>
 				</template>
 			</POSHeader>
 
@@ -971,6 +992,13 @@
 				</template>
 			</Dialog>
 
+			<ExpenseEntryDialog
+				v-if="shiftStore.hasOpenShift"
+				v-model="showExpenseDialog"
+				:opening-shift="shiftStore.currentShift?.name"
+				:pos-profile="shiftStore.currentProfile?.name"
+			/>
+
 			<!-- Clear Cache Overlay -->
 			<ClearCacheOverlay
 				ref="clearCacheOverlayRef"
@@ -997,6 +1025,7 @@ let _posInitPromise = null;
 </script>
 
 <script setup>
+import ExpenseEntryDialog from "../components/ExpenseEntryDialogue.vue";
 import ShiftClosingDialog from "@/components/ShiftClosingDialog.vue";
 import ShiftOpeningDialog from "@/components/ShiftOpeningDialog.vue";
 import ClearCacheOverlay from "@/components/common/ClearCacheOverlay.vue";
@@ -1074,6 +1103,9 @@ const customerSearchStore = useCustomerSearchStore();
 const bootstrapStore = useBootstrapStore();
 // Note: settingsStore is an alias to posSettingsStore (same Pinia store singleton)
 const settingsStore = posSettingsStore;
+
+//Expense entry dialog
+const showExpenseDialog = ref(false);
 
 // Real-time stock updates
 const { onStockUpdate } = useRealtimeStock();
