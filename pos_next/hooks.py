@@ -90,6 +90,22 @@ jinja = {
 fixtures = [
 	{"dt": "Role", "filters": [["role_name", "in", ["POSNext Cashier", "Nexus POS Manager"]]]},
 	{"dt": "Custom DocPerm", "filters": [["role", "in", ["POSNext Cashier"]]]},
+    {
+    	"doctype": "Custom Field",
+        "filters": [
+            [
+                "name",
+                "in",
+                [ 
+                    "Journal Entry-custom_pos_profile", 
+                    "Journal Entry-custom_pos_shift",
+                    "Journal Entry-custom_created_from_pos",
+                    "POS Closing Shift-custom_expense_summary",
+                    "POS Closing Shift Detail-custom_expense_amount",              
+                ]
+            ]
+        ]
+    }
 ]
 
 # Installation

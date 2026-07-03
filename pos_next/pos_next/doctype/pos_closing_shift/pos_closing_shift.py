@@ -53,7 +53,9 @@ class POSClosingShift(Document):
 		if user:
 			frappe.throw(
 				_(
-					f"POS Closing Shift <strong>already exists</strong> against {frappe.bold(self.user)} between selected period"
+					"POS Closing Shift <strong>already exists</strong> against {0} between selected period".format(
+						frappe.bold(self.user)
+					)
 				),
 				title=_("Invalid Period"),
 			)
@@ -280,12 +282,15 @@ class POSClosingShift(Document):
 
 			base_total = flt(detail.expected_amount) - flt(detail.opening_amount)
 
+			custom_expense_amount = flt(detail.get("custom_expense_amount"))
+			print("expense ",custom_expense_amount)
 			mode_summaries.append(
 				frappe._dict(
 					{
 						"mode_of_payment": mop,
 						"base_amount": base_total,
 						"opening_amount": flt(detail.opening_amount),
+						"custom_expense_amount": custom_expense_amount,
 						"expected_amount": flt(detail.expected_amount),
 						"difference": flt(detail.difference),
 						"currency_breakdown": currencies,
@@ -417,6 +422,30 @@ def _aggregate_payment(payments, mode_of_payment, amount, opening_amount=0):
 		)
 	)
 
+def _deduct_expenses_from_payments(pos_opening_shift, payments):
+    """Deduct POS expenses from payment reconciliation."""
+
+    expenses = frappe.get_all(
+        "Journal Entry",
+        filters={
+            "docstatus": 1,
+            "custom_pos_shift": pos_opening_shift,
+        },
+        fields=[
+            "mode_of_payment",
+            "total_debit",
+        ],
+    )
+
+    for expense in expenses:
+        for payment in payments:
+            if payment.mode_of_payment == expense.mode_of_payment:
+                payment.expected_amount -= flt(expense.total_debit)
+                payment.custom_expense_amount = (
+                    flt(payment.get("custom_expense_amount"))
+                    + flt(expense.total_debit)
+                )
+                break
 
 def _aggregate_tax(taxes, account_head, rate, amount):
 	"""Add or update tax amount for an account."""
@@ -510,7 +539,7 @@ def _process_invoice(invoice, invoice_field, company_currency, cash_mode, paymen
 
 	# Subtract change_amount once from the cash mode.  change_amount is an
 	# invoice-level field — the customer overpaid and received change back,
-	# so the drawer's net gain is (sum of cash rows - change).  Handling it
+	# so the drawer's net gain is (sum of cash rows − change).  Handling it
 	# outside the loop avoids double-subtraction when multiple payment rows
 	# share the same cash mode.
 	base_change = get_base_value(invoice, "change_amount", "base_change_amount", conversion_rate)
@@ -573,6 +602,32 @@ def make_closing_shift_from_opening(opening_shift):
 			)
 		)
 
+	expenses = frappe.get_all(
+		"Journal Entry",
+		filters={
+			"docstatus": 1,
+			"custom_pos_shift": opening_shift.get("name"),
+		},
+		fields=[
+			"name",
+			"mode_of_payment",
+			"total_debit",
+		],
+	)
+
+	closing_shift.set(
+		"custom_expense_summary",
+		[
+			{
+				"journal_entry": d.name,
+				"mode_of_payment": d.mode_of_payment,
+				"amount": d.total_debit,
+			}
+			for d in expenses
+		],
+	)
+	frappe.errprint(closing_shift.custom_expense_summary)
+	frappe.errprint(payments)
 	# Process invoices
 	invoices = get_pos_invoices(opening_shift.get("name"), doctype)
 	for invoice in invoices:
@@ -595,6 +650,10 @@ def make_closing_shift_from_opening(opening_shift):
 		)
 		amount = get_base_value(py, "paid_amount", "base_paid_amount")
 		_aggregate_payment(payments, py.mode_of_payment, amount)
+
+		
+	#deduct pos expenses from respective payment mode
+	_deduct_expenses_from_payments(opening_shift.get("name"),payments)
 
 	# Update closing shift with totals
 	closing_shift.grand_total = summary["grand_total"]

@@ -40,7 +40,7 @@ def get_shift_expenses(shift):
             )
             expense["total_debit"] = total_debit[0][0] if total_debit and total_debit[0][0] is not None else 0
 
-        total_expense += flt(expense.get("total_debit"))
+        total_expense += (expense.get("total_debit"))
 
     return {
         "expenses": expenses,
