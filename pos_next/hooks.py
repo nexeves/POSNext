@@ -106,6 +106,16 @@ fixtures = [
                 ]
             ]
         ]
+    },
+    {
+        "dt": "Workspace",
+        "filters": [["module", "=", "POS Next"]]
+    },
+    {
+        "dt": "Property Setter",
+        "filters": [
+            ["module", "=", "POS Next"],
+        ]
     }
 ]
 
