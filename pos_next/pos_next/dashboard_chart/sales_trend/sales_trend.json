@@ -1,0 +1,43 @@
+{
+ "chart_name": "Sales Trend",
+ "chart_type": "Report",
+ "creation": "2026-07-07 12:58:43.476490",
+ "currency": "INR",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart",
+ "dynamic_filters_json": "{}",
+ "filters_json": "{\"from_date\":\"2026-06-30\",\"to_date\":\"2026-07-31\",\"company\":\"POS\",\"include_payments\":0}",
+ "group_by_type": "Count",
+ "idx": 2,
+ "is_public": 0,
+ "is_standard": 1,
+ "modified": "2026-07-31 14:31:30.177475",
+ "modified_by": "Administrator",
+ "module": "POS Next",
+ "name": "Sales Trend",
+ "number_of_groups": 0,
+ "owner": "Administrator",
+ "report_name": "Sales Register",
+ "roles": [],
+ "show_values_over_chart": 1,
+ "time_interval": "Yearly",
+ "timeseries": 0,
+ "timespan": "Last Year",
+ "type": "Line",
+ "use_report_chart": 0,
+ "x_field": "posting_date",
+ "y_axis": [
+  {
+   "color": "#29CD42",
+   "y_field": "grand_total"
+  },
+  {
+   "color": "#CB2929",
+   "y_field": "sales___p"
+  },
+  {
+   "color": "#EC864B",
+   "y_field": "outstanding_amount"
+  }
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "chart_name": "Top Selling Item",
+ "chart_type": "Report",
+ "creation": "2026-07-08 09:05:07.019376",
+ "currency": "INR",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart",
+ "dynamic_filters_json": "{}",
+ "filters_json": "{\"from_date\":\"2026-07-01\",\"to_date\":\"2026-07-31\"}",
+ "group_by_type": "Count",
+ "idx": 3,
+ "is_public": 0,
+ "is_standard": 1,
+ "modified": "2026-07-31 14:30:50.879066",
+ "modified_by": "Administrator",
+ "module": "POS Next",
+ "name": "Top Selling Item",
+ "number_of_groups": 0,
+ "owner": "Administrator",
+ "report_name": "Top Selling Item",
+ "roles": [],
+ "show_values_over_chart": 0,
+ "time_interval": "Yearly",
+ "timeseries": 0,
+ "timespan": "Last Year",
+ "type": "Bar",
+ "use_report_chart": 0,
+ "x_field": "item_code",
+ "y_axis": [
+  {
+   "color": "#449CF0",
+   "y_field": "qty"
+  },
+  {
+   "color": "#29CD42",
+   "y_field": "amount"
+  },
+  {
+   "color": "#101a85",
+   "y_field": "percentage"
+  }
+ ]
+}
