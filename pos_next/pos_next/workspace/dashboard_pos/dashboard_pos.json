@@ -1,0 +1,108 @@
+{
+ "app": "pos_next",
+ "charts": [
+  {
+   "chart_name": "Business Trend",
+   "label": "Business Trend"
+  },
+  {
+   "chart_name": "Payment Bifurcation",
+   "label": "Payment Bifurcation"
+  },
+  {
+   "chart_name": "Top Selling Item",
+   "label": "Top Selling Item"
+  },
+  {
+   "chart_name": "Top Selling Item Group",
+   "label": "Top Selling Item Group"
+  }
+ ],
+ "content": "[{\"id\":\"sqkeuxOaCt\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h3\\\"><b>POS Dashboard</b></span>\",\"col\":12}},{\"id\":\"MF0KiL2axA\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Sales\",\"col\":4}},{\"id\":\"L-avcTyJol\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Purchase\",\"col\":4}},{\"id\":\"FmZT1uk6M8\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Expense\",\"col\":4}},{\"id\":\"xpAIiyBO6a\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Discount\",\"col\":4}},{\"id\":\"zqQd4xFRsx\",\"type\":\"spacer\",\"data\":{\"col\":4}},{\"id\":\"lLmkGpEZTk\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Write Off\",\"col\":4}},{\"id\":\"hpq31MGlw4\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Business Trend\",\"col\":12}},{\"id\":\"wg-2_qZ6Qh\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Payment Bifurcation\",\"col\":12}},{\"id\":\"g1qgn9G2cl\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Payable\",\"col\":4}},{\"id\":\"7rF5Tp1OoR\",\"type\":\"spacer\",\"data\":{\"col\":4}},{\"id\":\"9PvBVqUdV7\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Receivable\",\"col\":4}},{\"id\":\"xWppluQW-C\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Top Selling Item\",\"col\":12}},{\"id\":\"tEI1Vwfagf\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Top Selling Item\",\"col\":12}},{\"id\":\"Ulr4BKzEtP\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Top Selling Item Group\",\"col\":12}},{\"id\":\"yAZi6C1Ad3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Top Selling Item Group\",\"col\":12}},{\"id\":\"AL9AIaPLqF\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Out of Stock\",\"col\":3}},{\"id\":\"K3rKgj0RrL\",\"type\":\"spacer\",\"data\":{\"col\":6}},{\"id\":\"iH0b5aKYqi\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Expiring Soon\",\"col\":3}}]",
+ "creation": "2026-08-03 04:43:26.632585",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Dashboard POS",
+ "link_type": "DocType",
+ "links": [],
+ "modified": "2026-08-03 04:54:39.120347",
+ "modified_by": "Administrator",
+ "module": "POS Next",
+ "name": "Dashboard POS",
+ "number_cards": [
+  {
+   "label": "Total Sales",
+   "number_card_name": "Total Sales"
+  },
+  {
+   "label": "Total Purchase",
+   "number_card_name": "Total Purchase"
+  },
+  {
+   "label": "Total Expense",
+   "number_card_name": "Total POS Expense"
+  },
+  {
+   "label": "Total Discount",
+   "number_card_name": "Total Discount"
+  },
+  {
+   "label": "Total Write Off",
+   "number_card_name": "Total Write Off"
+  },
+  {
+   "label": "Total Payable",
+   "number_card_name": "Total Payable"
+  },
+  {
+   "label": "Total Receivable",
+   "number_card_name": "Total Receivable"
+  }
+ ],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 0.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Top Selling Item",
+   "link_to": "Top Selling Item",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Top Selling Item Group",
+   "link_to": "Top Selling Item Group",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Out of Stock",
+   "link_to": "Out of Stock",
+   "report_ref_doctype": "Bin",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Expiring Soon",
+   "link_to": "Batch Item Expiry Status",
+   "report_ref_doctype": "Stock Ledger Entry",
+   "type": "Report"
+  }
+ ],
+ "title": "Dashboard POS",
+ "type": "Workspace"
+}
