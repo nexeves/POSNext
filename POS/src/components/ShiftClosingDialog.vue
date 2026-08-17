@@ -1147,6 +1147,7 @@ async function loadClosingData() {
 					closing_amount: payment.closing_amount ?? null,
 					difference: 0,
 					_touched: false,
+					custom_expense_amount: 0,
 				})
 			);
 
@@ -1373,11 +1374,17 @@ const getTotalDifference = computed(() => {
 });
 
 function getSalesForPayment(payment) {
-	return (
-		Number.parseFloat(payment.expected_amount || 0) -
-		Number.parseFloat(payment.opening_amount || 0)+
-		Number.parseFloat(payment.custom_expense_amount || 0)
-	);
+	const expected = Number(payment.expected_amount || 0);
+	const expense = Number(payment.custom_expense_amount || 0);
+	const opening = Number(payment.opening_amount || 0);
+
+	// Python expected_amount already includes:
+	// Opening + Sales - Expenses
+	//
+	// Therefore:
+	// Sales = Expected + Expenses - Opening
+
+	return expected + expense - opening;
 }
 
 function getShiftDuration() {
@@ -1433,34 +1440,40 @@ function normalizeMode(mode) {
 }
 
 function applyExpensesToReconciliation() {
-	if (
-		!closingData.value ||
-		!closingData.value.payment_reconciliation ||
-		!expenses.value.length
-	) {
+	if (!closingData.value?.payment_reconciliation) {
 		return;
 	}
 
+	// Reset expense amount only.
+	// DO NOT modify expected_amount here because
+	// Python has already deducted the expenses.
 	closingData.value.payment_reconciliation.forEach((payment) => {
 		payment.custom_expense_amount = 0;
 	});
 
+	// Calculate expense amount for each payment method
 	expenses.value.forEach((expense) => {
 		const modeOfPayment = normalizeMode(expense.mode_of_payment);
 		const amount = Number(expense.total_debit ?? expense.amount ?? 0);
 
-		const paymentRow = closingData.value.payment_reconciliation.find(
-			(row) => normalizeMode(row.mode_of_payment) === modeOfPayment
-		);
+		if (!amount) return;
 
-		if (paymentRow && amount) {
+		const paymentRow =
+			closingData.value.payment_reconciliation.find(
+				(row) =>
+					normalizeMode(row.mode_of_payment) === modeOfPayment
+			);
+
+		if (paymentRow) {
 			paymentRow.custom_expense_amount =
-				(paymentRow.custom_expense_amount || 0) + amount;
-			paymentRow.expected_amount =
-				Number(paymentRow.expected_amount || 0) - amount;
-
-			calculateDifference(paymentRow);
+				Number(paymentRow.custom_expense_amount || 0) + amount;
 		}
+	});
+
+	// Recalculate difference using the expected amount
+	// already calculated by Python.
+	closingData.value.payment_reconciliation.forEach((payment) => {
+		calculateDifference(payment);
 	});
 }
 </script>
