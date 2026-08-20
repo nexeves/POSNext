@@ -1,0 +1,402 @@
+/* POS Day Book — desk page styling.
+   Every colour comes from a desk CSS variable so the page follows the
+   active theme (including dark mode) without a second palette. */
+
+.pos-day-book {
+	padding-bottom: 2rem;
+}
+
+.pos-day-book .pdb-card {
+	background: var(--card-bg);
+	border: 1px solid var(--border-color);
+	border-radius: var(--border-radius-md, 8px);
+	box-shadow: var(--shadow-base);
+	padding: var(--padding-md, 15px);
+	margin-bottom: 1rem;
+}
+
+.pos-day-book .pdb-section-title {
+	font-size: var(--text-md, 14px);
+	font-weight: 600;
+	color: var(--heading-color);
+	margin-bottom: 0.75rem;
+}
+
+.pos-day-book .pdb-section-note {
+	font-weight: 400;
+	font-size: var(--text-sm, 12px);
+	color: var(--text-muted);
+	margin-left: 0.5rem;
+}
+
+/* ----------------------------------------------------------------- filters */
+
+.pos-day-book .pdb-filters {
+	position: sticky;
+	top: 0;
+	z-index: 5;
+}
+
+.pos-day-book .pdb-filter-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+	gap: 0.75rem 1rem;
+	align-items: end;
+}
+
+.pos-day-book .pdb-filter .form-group {
+	margin-bottom: 0;
+}
+
+.pos-day-book .pdb-filter .control-label {
+	font-size: var(--text-sm, 12px);
+	color: var(--text-muted);
+	margin-bottom: 2px;
+}
+
+.pos-day-book .pdb-preset-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin-top: 0.9rem;
+	padding-top: 0.75rem;
+	border-top: 1px solid var(--border-color);
+}
+
+.pos-day-book .pdb-preset {
+	background: var(--subtle-fg);
+	border: 1px solid var(--border-color);
+	color: var(--text-color);
+	border-radius: 100px;
+	padding: 3px 12px;
+}
+
+.pos-day-book .pdb-preset:hover {
+	background: var(--subtle-accent);
+}
+
+.pos-day-book .pdb-preset.active {
+	background: var(--blue-500, #0289f7);
+	border-color: var(--blue-500, #0289f7);
+	color: #fff;
+}
+
+/* -------------------------------------------------------------------- KPIs */
+
+.pos-day-book .pdb-kpi-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+}
+
+.pos-day-book .pdb-kpi {
+	background: var(--card-bg);
+	border: 1px solid var(--border-color);
+	border-left: 3px solid var(--text-muted);
+	border-radius: var(--border-radius-md, 8px);
+	box-shadow: var(--shadow-base);
+	padding: 0.85rem 1rem;
+	cursor: pointer;
+	transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.pos-day-book .pdb-kpi:hover {
+	transform: translateY(-2px);
+	box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
+}
+
+.pos-day-book .pdb-kpi-label {
+	font-size: var(--text-sm, 12px);
+	color: var(--text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.pos-day-book .pdb-kpi-value {
+	font-size: 1.35rem;
+	font-weight: 600;
+	color: var(--heading-color);
+	margin: 0.25rem 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.pos-day-book .pdb-kpi-delta {
+	font-size: var(--text-sm, 12px);
+	color: var(--text-muted);
+}
+
+.pos-day-book .pdb-delta-up {
+	color: var(--green-600, #28a745);
+	font-weight: 600;
+}
+
+.pos-day-book .pdb-delta-down {
+	color: var(--red-600, #dc3545);
+	font-weight: 600;
+}
+
+.pos-day-book .pdb-delta-prev,
+.pos-day-book .pdb-delta-flat {
+	color: var(--text-light);
+	margin-left: 0.3rem;
+}
+
+.pos-day-book .pdb-tone-positive {
+	border-left-color: var(--green-500, #28a745);
+}
+.pos-day-book .pdb-tone-negative {
+	border-left-color: var(--red-500, #dc3545);
+}
+.pos-day-book .pdb-tone-warning {
+	border-left-color: var(--orange-500, #f5a623);
+}
+.pos-day-book .pdb-tone-primary {
+	border-left-color: var(--blue-500, #2490ef);
+}
+.pos-day-book .pdb-tone-neutral {
+	border-left-color: var(--gray-400, #9ea3a8);
+}
+
+/* ------------------------------------------------------------------ charts */
+
+.pos-day-book .pdb-chart-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1rem;
+}
+
+.pos-day-book .pdb-chart-grid .pdb-card {
+	margin-bottom: 0;
+	min-width: 0;
+}
+
+.pos-day-book .pdb-span-2 {
+	grid-column: span 2;
+}
+
+.pos-day-book .pdb-chart {
+	min-height: 240px;
+}
+
+.pos-day-book .pdb-chart .chart-container {
+	margin: 0;
+}
+
+/* ------------------------------------------------------------------ tables */
+
+.pos-day-book .pdb-ledger,
+.pos-day-book .pdb-shifts {
+	margin-top: 1rem;
+}
+
+.pos-day-book .pdb-datatable {
+	min-height: 120px;
+}
+
+.pos-day-book .pdb-totals {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.25rem;
+	margin-top: 0.75rem;
+	padding-top: 0.75rem;
+	border-top: 1px solid var(--border-color);
+	font-size: var(--text-sm, 12px);
+	color: var(--text-muted);
+}
+
+.pos-day-book .pdb-totals b {
+	color: var(--heading-color);
+}
+
+.pos-day-book .pdb-table-scroll {
+	overflow-x: auto;
+}
+
+.pos-day-book .pdb-table {
+	margin-bottom: 0;
+	font-size: var(--text-sm, 12px);
+	color: var(--text-color);
+}
+
+.pos-day-book .pdb-table th {
+	color: var(--text-muted);
+	font-weight: 500;
+	white-space: nowrap;
+	border-top: none;
+}
+
+.pos-day-book .pdb-table td {
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+.pos-day-book .pdb-table th.pdb-truncate,
+.pos-day-book .pdb-table td.pdb-truncate {
+	max-width: 190px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.pos-day-book .pdb-badge {
+	display: inline-block;
+	border-radius: 100px;
+	padding: 0 7px;
+	font-size: 10px;
+	font-weight: 600;
+	line-height: 16px;
+}
+
+.pos-day-book .pdb-badge-return {
+	background: var(--alert-bg-danger, #fdd);
+	color: var(--red-600, #dc3545);
+}
+
+.pos-day-book .pdb-status {
+	display: inline-block;
+	border-radius: 100px;
+	padding: 1px 10px;
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.pos-day-book .pdb-status-ok {
+	background: var(--alert-bg-success);
+	color: var(--green-600, #28a745);
+}
+
+.pos-day-book .pdb-status-short {
+	background: var(--alert-bg-danger);
+	color: var(--red-600, #dc3545);
+}
+
+.pos-day-book .pdb-status-excess {
+	background: var(--alert-bg-warning);
+	color: var(--orange-600, #d9822b);
+}
+
+/* ------------------------------------------------------------ empty states */
+
+.pos-day-book .pdb-empty {
+	text-align: center;
+	padding: 3rem 1rem;
+}
+
+.pos-day-book .pdb-empty-title {
+	font-size: var(--text-md, 14px);
+	font-weight: 600;
+	color: var(--heading-color);
+}
+
+.pos-day-book .pdb-empty-hint {
+	font-size: var(--text-sm, 12px);
+	color: var(--text-muted);
+	margin-top: 0.25rem;
+}
+
+.pos-day-book .pdb-empty-inline {
+	text-align: center;
+	padding: 2rem 1rem;
+	color: var(--text-muted);
+	font-size: var(--text-sm, 12px);
+}
+
+/* -------------------------------------------------- analysis / share bars */
+
+.pos-day-book .pdb-analysis .pdb-card {
+	margin-bottom: 0;
+}
+
+.pos-day-book .pdb-share {
+	position: relative;
+	min-width: 90px;
+	padding: 1px 6px;
+	border-radius: 3px;
+	overflow: hidden;
+}
+
+.pos-day-book .pdb-share-bar {
+	position: absolute;
+	inset: 0 auto 0 0;
+	background: var(--blue-500, #0289f7);
+	opacity: 0.18;
+	border-radius: 3px;
+}
+
+.pos-day-book .pdb-share-text {
+	position: relative;
+	font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------ POS expenses */
+
+.pos-day-book .pdb-expense-split {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	gap: 1rem;
+	align-items: start;
+}
+
+.pos-day-book .pdb-expense-chart {
+	min-height: 240px;
+}
+
+.pos-day-book .pdb-expense-entries {
+	margin-top: 1.25rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--border-color);
+}
+
+.pos-day-book .pdb-expense-accounts .pdb-section-title,
+.pos-day-book .pdb-expense-entries .pdb-section-title {
+	font-size: var(--text-sm, 12px);
+	color: var(--text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+@media (max-width: 992px) {
+	.pos-day-book .pdb-expense-split {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+/* ------------------------------------------------------------- responsive */
+
+@media (max-width: 992px) {
+	.pos-day-book .pdb-chart-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.pos-day-book .pdb-span-2 {
+		grid-column: span 1;
+	}
+
+	.pos-day-book .pdb-filters {
+		position: static;
+	}
+}
+
+/* ----------------------------------------------------------------- printing */
+
+@media print {
+	.pos-day-book .pdb-filters,
+	.pos-day-book .pdb-preset-row {
+		display: none;
+	}
+
+	.pos-day-book .pdb-card,
+	.pos-day-book .pdb-kpi {
+		box-shadow: none;
+		break-inside: avoid;
+	}
+
+	.pos-day-book .pdb-chart-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
