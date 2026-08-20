@@ -2971,6 +2971,7 @@ def apply_offers(invoice_data, selected_offers=None):
 						"discount_percentage": 0,
 						"discount_amount": 0,
 						"warehouse": item.get("warehouse") or profile.warehouse,
+						"batch_no": item.get("batch_no"),
 						"parenttype": invoice.get("doctype") or "Sales Invoice",
 					}
 				)

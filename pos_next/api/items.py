@@ -270,6 +270,12 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None, company=Non
 			"price_list_currency": item.get("price_list_currency"),
 			"plc_conversion_rate": item.get("plc_conversion_rate"),
 			"conversion_rate": item.get("conversion_rate"),
+			# batch_no isn't known yet at this stage (the batch picker hasn't run),
+			# so batch-specific Pricing Rules for the same item can tie with no
+			# way to disambiguate. for_shopping_cart tells ERPNext to pick one
+			# instead of raising MultiplePricingRuleConflict; the real batch-aware
+			# rule is resolved later in apply_offers() once batch_no is known.
+			"for_shopping_cart": 1,
 		}
 	)
 
