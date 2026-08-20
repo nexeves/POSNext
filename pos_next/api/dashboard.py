@@ -194,7 +194,6 @@ def get_kpis(filters):
 		(_("Credit / Outstanding"), "outstanding", "Currency", "warning"),
 		(_("POS Expense"), "pos_expense", "Currency", "negative"),
 		(_("Purchase"), "purchase", "Currency", "neutral"),
-		(_("Net Cash Position"), "net_cash", "Currency", "primary"),
 	]
 
 	kpis = []
