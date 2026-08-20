@@ -19,9 +19,13 @@ def console(*data):
 try:
 	from erpnext.accounts.doctype.pricing_rule import utils as pr_utils
 
-	from pos_next.overrides.pricing_rule import patch_get_other_conditions
+	from pos_next.overrides.pricing_rule import (
+		patch_get_other_conditions,
+		patch_get_pricing_rules_batch_filter,
+	)
 
 	patch_get_other_conditions(pr_utils)
+	patch_get_pricing_rules_batch_filter(pr_utils)
 except Exception:
 	pass
 
