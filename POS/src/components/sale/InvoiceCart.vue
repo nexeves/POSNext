@@ -234,6 +234,37 @@
 							</div>
 						</div>
 					</div>
+					<!-- Customer Balance (same figure the payment screen shows) -->
+					<div
+						v-if="customerCreditEnabled && customerBalanceAmount !== 0"
+						:class="[
+							'mt-1.5 rounded-lg border px-2 py-1 flex items-center justify-between',
+							customerBalanceAmount < 0
+								? 'bg-red-50 border-red-200'
+								: 'bg-emerald-50 border-emerald-200',
+						]"
+					>
+						<span
+							:class="[
+								'text-[10px] font-semibold',
+								customerBalanceAmount < 0 ? 'text-red-700' : 'text-emerald-700',
+							]"
+						>
+							{{
+								customerBalanceAmount < 0
+									? __("Outstanding Balance")
+									: __("Credit Balance")
+							}}
+						</span>
+						<span
+							:class="[
+								'text-xs font-bold',
+								customerBalanceAmount < 0 ? 'text-red-600' : 'text-emerald-600',
+							]"
+						>
+							{{ formatCurrency(Math.abs(customerBalanceAmount)) }}
+						</span>
+					</div>
 				</div>
 				<div v-else>
 					<div class="flex gap-1.5">
@@ -1455,9 +1486,14 @@
  */
 import { usePOSCartStore } from "@/stores/posCart";
 import { usePOSSettingsStore } from "@/stores/posSettings";
+import { usePOSShiftStore } from "@/stores/posShift";
 import { usePOSOffersStore } from "@/stores/posOffers";
 import { useCustomerSearchStore } from "@/stores/customerSearch";
-import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency";
+import {
+	DEFAULT_CURRENCY,
+	formatCurrency as formatCurrencyUtil,
+	roundCurrency,
+} from "@/utils/currency";
 import { useFormatters } from "@/composables/useFormatters";
 import { useCartSort } from "@/composables/useCartSort";
 import { isOffline } from "@/utils/offline";
@@ -1477,6 +1513,7 @@ import EditItemDialog from "./EditItemDialog.vue";
  */
 const cartStore = usePOSCartStore(); // Pinia store for cart state management
 const settingsStore = usePOSSettingsStore(); // Pinia store for POS settings
+const shiftStore = usePOSShiftStore(); // Pinia store for shift/profile (company for balance lookup)
 const offersStore = usePOSOffersStore(); // Pinia store for offers/promotions
 const customerSearchStore = useCustomerSearchStore(); // Pinia store for customer search
 const { formatQuantity } = useFormatters(); // Quantity formatting utilities
@@ -1673,6 +1710,50 @@ watch(
 );
 
 /**
+ * Customer outstanding / credit balance shown right under the customer card.
+ * Same figure (and endpoint) the payment screen shows, so the cashier sees it
+ * before starting the sale instead of only while paying.
+ *
+ * @endpoint pos_next.api.credit_sales.get_customer_balance
+ */
+const EMPTY_CUSTOMER_BALANCE = { total_outstanding: 0, total_credit: 0, net_balance: 0 };
+const customerBalance = ref({ ...EMPTY_CUSTOMER_BALANCE });
+
+const customerBalanceResource = createResource({
+	url: "pos_next.api.credit_sales.get_customer_balance",
+	makeParams() {
+		return {
+			customer: props.customer?.name || props.customer,
+			company: shiftStore.profileCompany,
+		};
+	},
+	auto: false,
+	onSuccess(data) {
+		customerBalance.value = data || { ...EMPTY_CUSTOMER_BALANCE };
+	},
+	onError(error) {
+		log.error("Error loading customer balance:", error);
+		customerBalance.value = { ...EMPTY_CUSTOMER_BALANCE };
+	},
+});
+
+/**
+ * Reload the balance whenever the customer changes.
+ * Balances come from submitted invoices, so they are unavailable offline.
+ */
+watch(
+	() => props.customer?.name || props.customer,
+	(customerName) => {
+		if (customerName && !isOffline()) {
+			customerBalanceResource.reload();
+		} else {
+			customerBalance.value = { ...EMPTY_CUSTOMER_BALANCE };
+		}
+	},
+	{ immediate: true }
+);
+
+/**
  * ============================================================================
  * COMPUTED PROPERTIES
  * ============================================================================
@@ -1684,6 +1765,22 @@ watch(
  * @returns {Number} Count of applied offers
  */
 const appliedOfferCount = computed(() => (props.appliedOffers || []).length);
+
+/**
+ * Credit/balance display is tied to the same POS profile switches the payment
+ * screen uses: credit sales, or paying with existing customer credit.
+ */
+const customerCreditEnabled = computed(
+	() => settingsStore.allowCreditSale || settingsStore.allowCustomerCreditPayment
+);
+
+/**
+ * Signed balance for display: positive = credit available, negative = outstanding.
+ * (net_balance from the API is the opposite sign.)
+ */
+const customerBalanceAmount = computed(() =>
+	roundCurrency(-(customerBalance.value?.net_balance || 0))
+);
 
 /**
  * Pre-computed customer lookup map for O(1) access by ID.
