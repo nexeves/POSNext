@@ -747,6 +747,21 @@ def update_invoice(data):
 
 		company = invoice_doc.get("company") or (pos_profile_doc.company if pos_profile_doc else None)
 
+		# Ensure cost_center is always tagged: POS Profile's cost_center, else
+		# the company's default cost center. Don't overwrite one already set
+		# (e.g. by the frontend or an item's own cost center).
+		if company:
+			cost_center = (
+				invoice_doc.get("cost_center")
+				or (pos_profile_doc.get("cost_center") if pos_profile_doc else None)
+				or frappe.get_cached_value("Company", company, "cost_center")
+			)
+			if cost_center:
+				invoice_doc.cost_center = cost_center
+				for item in invoice_doc.get("items", []):
+					if not item.get("cost_center"):
+						item.cost_center = cost_center
+
 		if company and invoice_doc.get("payments") and doctype == "Sales Invoice":
 			_set_payment_accounts(invoice_doc.payments, company)
 

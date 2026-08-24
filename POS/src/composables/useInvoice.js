@@ -218,7 +218,10 @@ export function useInvoice() {
 	function addItem(item, quantity = 1) {
 		const itemUom = item.uom || item.stock_uom;
 		const existingItem = invoiceItems.value.find(
-			(i) => i.item_code === item.item_code && i.uom === itemUom
+			(i) =>
+				i.item_code === item.item_code &&
+				i.uom === itemUom &&
+				i.batch_no === item.batch_no
 		);
 
 		if (existingItem) {
@@ -310,16 +313,16 @@ export function useInvoice() {
 	 * @param {string|null} uom - Optional UOM to match when same item exists with different UOMs.
 	 *                            If provided, only removes the item with matching item_code AND uom.
 	 *                            If null, removes the first item matching item_code.
+	 * @param {string|null} batchNo - Optional batch_no to match when same item/uom exists with
+	 *                            different batches. If provided, only removes the matching batch.
 	 */
-	function removeItem(itemCode, uom = null) {
-		let itemToRemove;
-		if (uom) {
-			itemToRemove = invoiceItems.value.find(
-				(i) => i.item_code === itemCode && i.uom === uom
-			);
-		} else {
-			itemToRemove = invoiceItems.value.find((i) => i.item_code === itemCode);
-		}
+	function removeItem(itemCode, uom = null, batchNo = null) {
+		const matches = (i) =>
+			i.item_code === itemCode &&
+			(!uom || i.uom === uom) &&
+			(!batchNo || i.batch_no === batchNo);
+
+		const itemToRemove = invoiceItems.value.find(matches);
 
 		if (itemToRemove) {
 			// Update cache incrementally (subtract removed item values)
@@ -340,12 +343,8 @@ export function useInvoice() {
 			}
 		}
 
-		if (uom) {
-			invoiceItems.value = invoiceItems.value.filter(
-				(i) => !(i.item_code === itemCode && i.uom === uom)
-			);
-		} else {
-			invoiceItems.value = invoiceItems.value.filter((i) => i.item_code !== itemCode);
+		if (itemToRemove) {
+			invoiceItems.value = invoiceItems.value.filter((i) => i !== itemToRemove);
 		}
 	}
 
@@ -356,11 +355,18 @@ export function useInvoice() {
 	 * @param {string|null} uom - Optional UOM to match when same item exists with different UOMs.
 	 *                            If provided, only updates the item with matching item_code AND uom.
 	 *                            If null, updates the first item matching item_code.
+	 * @param {string|null} batchNo - Optional batch_no to match when same item/uom exists with
+	 *                            different batches.
 	 */
-	function updateItemQuantity(itemCode, quantity, uom = null) {
+	function updateItemQuantity(itemCode, quantity, uom = null, batchNo = null) {
 		let item;
 		if (uom) {
-			item = invoiceItems.value.find((i) => i.item_code === itemCode && i.uom === uom);
+			item = invoiceItems.value.find(
+				(i) =>
+					i.item_code === itemCode &&
+					i.uom === uom &&
+					(!batchNo || i.batch_no === batchNo)
+			);
 		} else {
 			item = invoiceItems.value.find((i) => i.item_code === itemCode);
 		}
@@ -407,8 +413,13 @@ export function useInvoice() {
 		}
 	}
 
-	function updateItemRate(itemCode, rate, isManualEdit = false) {
-		const item = invoiceItems.value.find((i) => i.item_code === itemCode);
+	function updateItemRate(itemCode, rate, isManualEdit = false, uom = null, batchNo = null) {
+		const item = invoiceItems.value.find(
+			(i) =>
+				i.item_code === itemCode &&
+				(!uom || i.uom === uom) &&
+				(!batchNo || i.batch_no === batchNo)
+		);
 		if (item) {
 			// Store old values before update for incremental cache adjustment
 			// Use effective rate (manually edited rate or price_list_rate)
@@ -449,8 +460,13 @@ export function useInvoice() {
 		}
 	}
 
-	function updateItemDiscount(itemCode, discountPercentage) {
-		const item = invoiceItems.value.find((i) => i.item_code === itemCode);
+	function updateItemDiscount(itemCode, discountPercentage, uom = null, batchNo = null) {
+		const item = invoiceItems.value.find(
+			(i) =>
+				i.item_code === itemCode &&
+				(!uom || i.uom === uom) &&
+				(!batchNo || i.batch_no === batchNo)
+		);
 		if (item) {
 			// Validate discount percentage (0-100)
 			let validDiscount = Number.parseFloat(discountPercentage) || 0;

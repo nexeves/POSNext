@@ -197,7 +197,7 @@ def _get_pos_settings(pos_profile_doc):
 	Get POS Settings for the given POS Profile.
 
 	Some settings are derived from POS Profile (single source of truth):
-	- allow_write_off_change: Based on write_off_account and write_off_limit
+	- allow_write_off_change: Directly from POS Profile's posa_allow_write_off_change checkbox
 	- disable_rounded_total: Directly from POS Profile
 
 	Args:
@@ -218,9 +218,7 @@ def _get_pos_settings(pos_profile_doc):
 		)
 
 		# Derive from POS Profile (single source of truth)
-		settings["allow_write_off_change"] = (
-			1 if (pos_profile_doc.write_off_account and (pos_profile_doc.write_off_limit or 0) > 0) else 0
-		)
+		settings["allow_write_off_change"] = 1 if pos_profile_doc.get("posa_allow_write_off_change") else 0
 		settings["disable_rounded_total"] = pos_profile_doc.disable_rounded_total or 0
 
 		return settings

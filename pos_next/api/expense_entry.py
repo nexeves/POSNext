@@ -83,6 +83,13 @@ def create_expense_entry(data):
 			f"No account configured for Mode of Payment {mode_of_payment}"
 		)
 
+	# Tag cost_center: POS Profile's cost_center, else the company's default cost center.
+	cost_center = None
+	if pos_profile:
+		cost_center = frappe.db.get_value("POS Profile", pos_profile, "cost_center")
+	if not cost_center:
+		cost_center = frappe.get_cached_value("Company", company, "cost_center")
+
 	je = frappe.new_doc("Journal Entry")
 
 	je.voucher_type = "Journal Entry"
@@ -108,6 +115,7 @@ def create_expense_entry(data):
 		{
 			"account": expense_account,
 			"debit_in_account_currency": amount,
+			"cost_center": cost_center,
 		},
 	)
 
@@ -116,6 +124,7 @@ def create_expense_entry(data):
 		{
 			"account": payment_account,
 			"credit_in_account_currency": amount,
+			"cost_center": cost_center,
 		},
 	)
 

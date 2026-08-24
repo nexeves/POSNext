@@ -621,11 +621,16 @@ const loadDialogData = async () => {
 	}
 	checkPermissions();
 
-	// Set country from POS Profile
-	if (props.posProfile) {
-		await posProfileResource.reload();
+	if (isEditMode.value) {
+		// Set country from POS Profile (edit mode only)
+		if (props.posProfile) {
+			await posProfileResource.reload();
+		} else {
+			selectedCountryCode.value = "+20";
+		}
 	} else {
-		selectedCountryCode.value = "+20";
+		// New customers always default to +91, regardless of POS Profile's country
+		selectedCountryCode.value = "+91";
 	}
 };
 

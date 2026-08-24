@@ -8,7 +8,7 @@ This module contains shared constants, field lists, and default values
 used across multiple API modules to maintain DRY principles.
 
 Note: Some settings are derived from POS Profile as single source of truth:
-- allow_write_off_change: derived from POS Profile (write_off_account + write_off_limit > 0)
+- allow_write_off_change: uses POS Profile's posa_allow_write_off_change checkbox directly
 - disable_rounded_total: uses POS Profile value directly
 """
 

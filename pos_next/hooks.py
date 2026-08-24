@@ -50,7 +50,8 @@ _asset_version = get_build_version()
 # include js in doctype views
 doctype_js = {
 	"Customer": "public/js/customer.js",
-	"Purchase Invoice": "public/js/purchase.js"
+	"Purchase Invoice": "public/js/purchase.js",
+	"Pricing Rule": "public/js/pricing_rule.js"
 	}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -200,6 +201,7 @@ doc_events = {
     "Purchase Invoice": {
         "on_submit": [
             "pos_next.api.purchase_invoice.update_item_prices",
+            "pos_next.api.purchase_invoice.update_item_buying_prices",
             "pos_next.api.purchase_invoice.update_item_pricing_rules",
         ]
     }

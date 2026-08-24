@@ -391,7 +391,8 @@
 								:warehouses="profileWarehouses"
 								@update-quantity="cartStore.updateItemQuantity"
 								@remove-item="
-									(itemCode, uom) => cartStore.removeItem(itemCode, uom)
+									(itemCode, uom, batchNo) =>
+										cartStore.removeItem(itemCode, uom, batchNo)
 								"
 								@select-customer="handleCustomerSelected"
 								@create-customer="handleCreateCustomer"
@@ -1961,7 +1962,12 @@ function handleItemSelected(item, autoAdd = false) {
 }
 
 async function handleEditItem(updatedItem) {
-	await cartStore.updateItemDetails(updatedItem.item_code, updatedItem);
+	await cartStore.updateItemDetails(
+		updatedItem.item_code,
+		updatedItem,
+		updatedItem.uom,
+		updatedItem.batch_no
+	);
 }
 
 function handleAdditionalDiscountUpdate(discountAmount) {

@@ -151,7 +151,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			items
 				.map(
 					(i) =>
-						`${i.item_code}:${i.quantity}:${i.uom || ""}:${i.discount_percentage || 0}`
+						`${i.item_code}:${i.quantity}:${i.uom || ""}:${i.batch_no || ""}:${i.discount_percentage || 0}`
 				)
 				.join("|"),
 			// Total item count
@@ -184,7 +184,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			// Account for quantity already in the cart for this item
 			const itemUom = item.uom || item.stock_uom;
 			const existing = invoiceItems.value.find(
-				(i) => i.item_code === item.item_code && i.uom === itemUom
+				(i) =>
+					i.item_code === item.item_code &&
+					i.uom === itemUom &&
+					i.batch_no === item.batch_no
 			);
 			const totalQty = (existing ? existing.quantity : 0) + qty;
 			const warehouse = item.warehouse || currentProfile.warehouse;
@@ -203,12 +206,17 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * Wraps useInvoice.updateItemQuantity to enforce stock limits
 	 * when the user clicks +/- or types a new quantity.
 	 */
-	function updateItemQuantity(itemCode, quantity, uom = null) {
+	function updateItemQuantity(itemCode, quantity, uom = null, batchNo = null) {
 		const item = uom
-			? invoiceItems.value.find((i) => i.item_code === itemCode && i.uom === uom)
+			? invoiceItems.value.find(
+					(i) =>
+						i.item_code === itemCode &&
+						i.uom === uom &&
+						(!batchNo || i.batch_no === batchNo)
+				)
 			: invoiceItems.value.find((i) => i.item_code === itemCode);
 
-		if (!item) return baseUpdateItemQuantity(itemCode, quantity, uom);
+		if (!item) return baseUpdateItemQuantity(itemCode, quantity, uom, batchNo);
 
 		const newQty = Number.parseFloat(quantity) || 1;
 
@@ -225,7 +233,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			}
 		}
 
-		baseUpdateItemQuantity(itemCode, quantity, uom);
+		baseUpdateItemQuantity(itemCode, quantity, uom, batchNo);
 	}
 
 	function clearCart() {
@@ -1240,14 +1248,18 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	}
 
 	/**
-	 * Find a cart item by item_code and optionally by UOM
+	 * Find a cart item by item_code and optionally by UOM and batch_no
 	 * @param {string} itemCode - Item code to find
 	 * @param {string|null} uom - Optional UOM to match
+	 * @param {string|null} batchNo - Optional batch_no to match
 	 * @returns {Object|undefined} Cart item or undefined
 	 */
-	function findCartItem(itemCode, uom = null) {
+	function findCartItem(itemCode, uom = null, batchNo = null) {
 		return invoiceItems.value.find(
-			(item) => item.item_code === itemCode && (!uom || item.uom === uom)
+			(item) =>
+				item.item_code === itemCode &&
+				(!uom || item.uom === uom) &&
+				(!batchNo || item.batch_no === batchNo)
 		);
 	}
 
@@ -1256,11 +1268,16 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * @param {string} itemCode - Item code
 	 * @param {string} targetUom - Target UOM to find
 	 * @param {Object} excludeItem - Item to exclude from search
+	 * @param {string|null} batchNo - Optional batch_no to match (different batches must not merge)
 	 * @returns {Object|undefined} Existing item or undefined
 	 */
-	function findItemWithUom(itemCode, targetUom, excludeItem = null) {
+	function findItemWithUom(itemCode, targetUom, excludeItem = null, batchNo = null) {
 		return invoiceItems.value.find(
-			(item) => item.item_code === itemCode && item.uom === targetUom && item !== excludeItem
+			(item) =>
+				item.item_code === itemCode &&
+				item.uom === targetUom &&
+				item !== excludeItem &&
+				item.batch_no === batchNo
 		);
 	}
 
@@ -1312,14 +1329,15 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * @param {string} itemCode - Item code
 	 * @param {string} newUom - New UOM to change to
 	 * @param {string|null} currentUom - Current UOM (required when same item has multiple UOMs)
+	 * @param {string|null} batchNo - Current batch_no (required when same item has multiple batches)
 	 */
-	async function changeItemUOM(itemCode, newUom, currentUom = null) {
+	async function changeItemUOM(itemCode, newUom, currentUom = null, batchNo = null) {
 		try {
-			const cartItem = findCartItem(itemCode, currentUom);
+			const cartItem = findCartItem(itemCode, currentUom, batchNo);
 			if (!cartItem || cartItem.uom === newUom) return;
 
-			// Check for existing item to merge with
-			const existingItem = findItemWithUom(itemCode, newUom, cartItem);
+			// Check for existing item to merge with (only merge within the same batch)
+			const existingItem = findItemWithUom(itemCode, newUom, cartItem, cartItem.batch_no);
 			if (existingItem) {
 				const totalQty = mergeItems(cartItem, existingItem, cartItem.quantity);
 				showSuccess(__("Merged into {0} (Total: {1})", [newUom, totalQty]));
@@ -1342,17 +1360,23 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * @param {string} itemCode - Item code
 	 * @param {Object} updates - Updated details
 	 * @param {string|null} currentUom - Current UOM (required when same item has multiple UOMs)
+	 * @param {string|null} currentBatchNo - Current batch_no (required when same item has multiple batches)
 	 */
-	async function updateItemDetails(itemCode, updates, currentUom = null) {
+	async function updateItemDetails(itemCode, updates, currentUom = null, currentBatchNo = null) {
 		try {
-			const cartItem = findCartItem(itemCode, currentUom);
+			const cartItem = findCartItem(itemCode, currentUom, currentBatchNo);
 			if (!cartItem) {
 				throw new Error("Item not found in cart");
 			}
 
-			// Handle UOM change with potential merge
+			// Handle UOM change with potential merge (only merge within the same batch)
 			if (updates.uom && updates.uom !== cartItem.uom) {
-				const existingItem = findItemWithUom(itemCode, updates.uom, cartItem);
+				const existingItem = findItemWithUom(
+					itemCode,
+					updates.uom,
+					cartItem,
+					cartItem.batch_no
+				);
 				if (existingItem) {
 					const qtyToMerge = updates.quantity ?? cartItem.quantity;
 					const totalQty = mergeItems(cartItem, existingItem, qtyToMerge);

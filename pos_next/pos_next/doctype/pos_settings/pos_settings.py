@@ -110,6 +110,13 @@ def get_pos_settings(pos_profile):
 	if not settings:
 		settings = create_default_settings(pos_profile)
 
+	# allow_write_off_change is not a real POS Settings column - it's derived from
+	# POS Profile's posa_allow_write_off_change checkbox (single source of truth).
+	# Must match the same derivation in pos_next.api.bootstrap._get_pos_settings().
+	settings["allow_write_off_change"] = cint(
+		frappe.db.get_value("POS Profile", pos_profile, "posa_allow_write_off_change") or 0
+	)
+
 	# Inject the current global Stock Settings value for transparency
 	# This helps UI reflect the actual state even if multiple POS Settings exist
 	settings["_global_allow_negative_stock"] = cint(
