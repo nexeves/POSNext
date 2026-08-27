@@ -597,27 +597,36 @@ const posProfileResource = createResource({
 // =============================================================================
 
 const loadDialogData = async () => {
+	// New customers always default to +91, regardless of POS Profile's country
+	if (!isEditMode.value) {
+		selectedCountryCode.value = "+91";
+	}
+
 	// Lazy load countries (non-blocking)
 	countriesStore.loadCountries();
 
-	await sellingSettingsResource.reload();
+	try {
+		await sellingSettingsResource.reload();
 
-	if (!isEditMode.value) {
-		customerData.value.customer_group = "";
-		customerData.value.territory = "";
-	}
+		if (!isEditMode.value) {
+			customerData.value.customer_group = "";
+			customerData.value.territory = "";
+		}
 
-	// Load form options
-	await Promise.all([
-		territoriesResource.reload(),
-		customerGroupsResource.reload(),
-		governoratesResource.reload(),
-	]);
-	if (isEditMode.value && props.customer?.name) {
-		await customerLocationResource.reload();
-	}
-	if (customerData.value.custom_governorate) {
-		await districtsResource.reload();
+		// Load form options
+		await Promise.all([
+			territoriesResource.reload(),
+			customerGroupsResource.reload(),
+			governoratesResource.reload(),
+		]);
+		if (isEditMode.value && props.customer?.name) {
+			await customerLocationResource.reload();
+		}
+		if (customerData.value.custom_governorate) {
+			await districtsResource.reload();
+		}
+	} catch (err) {
+		log.error("Error loading Create Customer dialog options", err);
 	}
 	checkPermissions();
 
@@ -628,9 +637,6 @@ const loadDialogData = async () => {
 		} else {
 			selectedCountryCode.value = "+20";
 		}
-	} else {
-		// New customers always default to +91, regardless of POS Profile's country
-		selectedCountryCode.value = "+91";
 	}
 };
 
