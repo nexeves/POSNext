@@ -1413,9 +1413,11 @@ def submit_invoice(invoice=None, data=None):
 		# Auto-set batch numbers for returns
 		_auto_set_return_batches(invoice_doc)
 
-		# Handle write-off amount if provided
+		# Handle write-off amount if provided. Positive on a regular sale (change
+		# rounded down instead of returned); negative on a return, to reverse the
+		# original invoice's write-off proportionally to the items being returned.
 		write_off_amount = flt(data.get("write_off_amount") or invoice.get("write_off_amount") or 0)
-		if write_off_amount > 0 and doctype == "Sales Invoice":
+		if write_off_amount and doctype == "Sales Invoice":
 			# Get write-off account and cost center from POS Profile
 			if pos_profile:
 				try:
@@ -1424,8 +1426,14 @@ def submit_invoice(invoice=None, data=None):
 					write_off_cost_center = pos_profile_doc.write_off_cost_center
 					write_off_limit = flt(pos_profile_doc.write_off_limit or 0)
 
-					# Validate write-off amount is within limit
-					if write_off_limit > 0 and write_off_amount > write_off_limit:
+					# Validate write-off amount is within limit. Returns are exempt: the
+					# amount there is a forced reversal of the original invoice's
+					# write-off, not a new discretionary one subject to today's limit.
+					if (
+						write_off_limit > 0
+						and not invoice_doc.is_return
+						and abs(write_off_amount) > write_off_limit
+					):
 						frappe.throw(
 							_("Write-off amount {0} exceeds limit {1}").format(
 								write_off_amount, write_off_limit
@@ -2335,6 +2343,7 @@ def prepare_return_invoice(invoice_name, pos_opening_shift=None):
 			si.grand_total,
 			si.paid_amount,
 			si.outstanding_amount,
+			si.write_off_amount,
 			si.customer,
 			si.customer_name,
 			si.net_total,
@@ -2442,6 +2451,7 @@ def prepare_return_invoice(invoice_name, pos_opening_shift=None):
 		"grand_total": invoice_info.grand_total,
 		"paid_amount": invoice_info.paid_amount,
 		"outstanding_amount": invoice_info.outstanding_amount,
+		"write_off_amount": invoice_info.write_off_amount,
 		"customer": invoice_info.customer,
 		"customer_name": invoice_info.customer_name,
 		"posting_date": invoice_info.posting_date,
