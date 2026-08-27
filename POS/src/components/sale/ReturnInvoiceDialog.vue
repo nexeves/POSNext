@@ -934,14 +934,12 @@
 						<div class="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
 							<div class="flex items-center justify-between text-sm">
 								<span class="text-gray-600">{{
-									isPartiallyPaid
+									showPartialBreakdown
 										? __("Refundable Amount:")
 										: __("Total Refund:")
 								}}</span>
 								<span class="font-bold text-gray-900">{{
-									formatCurrency(
-										isPartiallyPaid ? maxRefundableAmount : returnTotal
-									)
+									formatCurrency(maxRefundableAmount)
 								}}</span>
 							</div>
 							<div class="flex items-center justify-between text-sm mt-1">
@@ -949,12 +947,7 @@
 								<span
 									:class="[
 										'font-bold',
-										Math.abs(
-											totalPaymentAmount -
-												(isPartiallyPaid
-													? maxRefundableAmount
-													: returnTotal)
-										) < 0.01
+										Math.abs(totalPaymentAmount - maxRefundableAmount) < 0.01
 											? 'text-green-600'
 											: 'text-red-600',
 									]"
@@ -963,16 +956,11 @@
 								</span>
 							</div>
 							<p
-								v-if="
-									Math.abs(
-										totalPaymentAmount -
-											(isPartiallyPaid ? maxRefundableAmount : returnTotal)
-									) >= 0.01
-								"
+								v-if="Math.abs(totalPaymentAmount - maxRefundableAmount) >= 0.01"
 								class="mt-2 text-xs text-amber-600 text-start"
 							>
 								{{
-									isPartiallyPaid
+									showPartialBreakdown
 										? __("⚠️ Payment total must equal refundable amount")
 										: __("⚠️ Payment total must equal refund amount")
 								}}
@@ -1001,7 +989,7 @@
 								>{{ selectedItems.length }}</span
 							>
 						</div>
-						<!-- Breakdown for partially paid invoices -->
+						<!-- Breakdown for partially paid invoices and/or invoices with a write-off -->
 						<template v-if="showPartialBreakdown">
 							<div
 								class="flex justify-between items-center text-sm pt-2 border-t border-red-200"
@@ -1011,10 +999,16 @@
 									formatCurrency(returnTotal)
 								}}</span>
 							</div>
-							<div class="flex justify-between items-center text-sm">
+							<div v-if="isPartiallyPaid" class="flex justify-between items-center text-sm">
 								<span class="text-gray-600">{{ __("Credit Adjustment:") }}</span>
 								<span class="font-medium text-gray-700"
 									>-{{ formatCurrency(creditAdjustmentAmount) }}</span
+								>
+							</div>
+							<div v-if="hasWriteOff" class="flex justify-between items-center text-sm">
+								<span class="text-gray-600">{{ __("Write-off:") }}</span>
+								<span class="font-medium text-gray-700"
+									>-{{ formatCurrency(writeOffAmount) }}</span
 								>
 							</div>
 						</template>
@@ -1375,6 +1369,7 @@ const fetchInvoiceResource = createResource({
 				grand_total: origInvoice.grand_total,
 				paid_amount: origInvoice.paid_amount,
 				outstanding_amount: origInvoice.outstanding_amount,
+				write_off_amount: origInvoice.write_off_amount || 0,
 				payments: origInvoice.payments || [],
 				docstatus: 1, // Already validated by backend
 				is_return: 0,
@@ -1474,6 +1469,10 @@ const createReturnResource = createResource({
 			})),
 			// Flag to indicate return amount should be added to customer credit balance
 			add_to_customer_balance: addToCustomerCredit.value,
+			// Reverse the original invoice's write-off (proportional to the items being
+			// returned) so the return invoice's own accounting balances without requiring
+			// a cash/credit refund for the amount that was never actually collected.
+			write_off_amount: writeOffAmount.value > 0 ? -Math.abs(writeOffAmount.value) : 0,
 			// Payment amounts are negative for refunds
 			// If addToCustomerCredit is true, send empty payments array so outstanding stays negative
 			// This negative outstanding becomes customer credit balance
@@ -1616,30 +1615,45 @@ const totalPaymentAmount = computed(() =>
 	)
 );
 
-const maxRefundableAmount = computed(() => {
-	if (!originalInvoice.value) return 0;
-	if (!isPartiallyPaid.value && !isOriginalCreditSale.value) return returnTotal.value;
+// Share of the original invoice's write-off (e.g. change rounded down instead
+// of returned) attributable to the items being returned. A full return
+// reverses the entire write-off; a partial return reverses its proportional
+// share, so cash refund + write-off always accounts for the full item value.
+const writeOffAmount = computed(() => {
+	const originalWriteOff = originalInvoice.value?.write_off_amount || 0;
+	if (!originalInvoice.value || !originalWriteOff) return 0;
 
 	const grandTotal = Math.abs(originalInvoice.value.grand_total) || 1;
 	const returnRatio = returnTotal.value / grandTotal;
-	return roundCurrency(Math.min(returnTotal.value, originalPaidAmount.value * returnRatio));
+	return roundCurrency(originalWriteOff * returnRatio);
+});
+
+const maxRefundableAmount = computed(() => {
+	if (!originalInvoice.value) return 0;
+	const cashPortion = roundCurrency(returnTotal.value - writeOffAmount.value);
+	if (!isPartiallyPaid.value && !isOriginalCreditSale.value) return cashPortion;
+
+	const grandTotal = Math.abs(originalInvoice.value.grand_total) || 1;
+	const returnRatio = returnTotal.value / grandTotal;
+	return roundCurrency(Math.min(cashPortion, originalPaidAmount.value * returnRatio));
 });
 
 // Amount that goes toward credit balance (for partially paid invoices)
 const creditAdjustmentAmount = computed(() =>
 	isPartiallyPaid.value
-		? roundCurrency(Math.max(0, returnTotal.value - maxRefundableAmount.value))
+		? roundCurrency(Math.max(0, returnTotal.value - writeOffAmount.value - maxRefundableAmount.value))
 		: 0
 );
 
 // Summary display helpers for the Return Summary section
-const showPartialBreakdown = computed(() => isPartiallyPaid.value && !isOriginalCreditSale.value);
+const hasWriteOff = computed(() => !isOriginalCreditSale.value && writeOffAmount.value > 0.005);
+const showPartialBreakdown = computed(
+	() => (isPartiallyPaid.value || hasWriteOff.value) && !isOriginalCreditSale.value
+);
 const summaryRefundLabel = computed(() =>
 	showPartialBreakdown.value ? "Cash Refund:" : "Refund Amount:"
 );
-const summaryRefundAmount = computed(() =>
-	showPartialBreakdown.value ? maxRefundableAmount.value : returnTotal.value
-);
+const summaryRefundAmount = computed(() => maxRefundableAmount.value);
 
 // Cache RTL direction check (only needs to run once per session)
 const isRTL = document.documentElement.dir === "rtl";
@@ -1669,7 +1683,7 @@ const canCreateReturn = computed(() => {
 	const hasValidPayments = payments.every(
 		(payment) => payment.mode_of_payment && payment.amount > 0
 	);
-	return hasValidPayments && Math.abs(totalPaymentAmount.value - returnTotal.value) < 0.01;
+	return hasValidPayments && Math.abs(totalPaymentAmount.value - maxRefundableAmount.value) < 0.01;
 });
 
 // Shared filter function to avoid duplicate code
@@ -1733,9 +1747,7 @@ watch(returnTotal, (newTotal) => {
 	if (!returnModal.visible || !showDialog.value || isOriginalCreditSale.value) return;
 	if (refundPayments.value.length !== 1 || newTotal <= 0) return;
 
-	refundPayments.value[0].amount = isPartiallyPaid.value
-		? roundCurrency(maxRefundableAmount.value)
-		: newTotal;
+	refundPayments.value[0].amount = roundCurrency(maxRefundableAmount.value);
 });
 
 // Methods
