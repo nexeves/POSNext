@@ -1,0 +1,524 @@
+{
+ "charts": [
+  {
+   "chart_name": "Business Trend",
+   "label": "Business Trend"
+  },
+  {
+   "chart_name": "Payment Bifurcation",
+   "label": "Payment Bifurcation"
+  },
+  {
+   "chart_name": "Top Selling Item",
+   "label": "Top Selling Item"
+  },
+  {
+   "chart_name": "Top Selling Item Group",
+   "label": "Top Selling Item Group"
+  }
+ ],
+ "content": "[{\"id\":\"so001\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Store Operations</b></span>\",\"col\":12}},{\"id\":\"so002\",\"type\":\"paragraph\",\"data\":{\"text\":\"<span class=\\\"text-muted\\\">Everything the store runs on, in one place. Open <b>POS Day Book</b> for figures you can filter by date, branch, profile, cashier or shift \\u2014 the cards below are a fixed this-month summary.</span>\",\"col\":12}},{\"id\":\"so003\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h5\\\"><b>Quick Actions</b></span>\",\"col\":12}},{\"id\":\"so004\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Start POS\",\"col\":3}},{\"id\":\"so005\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"POS Day Book\",\"col\":3}},{\"id\":\"so006\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"so007\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Invoice\",\"col\":3}},{\"id\":\"so008\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item\",\"col\":3}},{\"id\":\"so009\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Entry\",\"col\":3}},{\"id\":\"so010\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Open Shift\",\"col\":3}},{\"id\":\"so011\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Close Shift\",\"col\":3}},{\"id\":\"so012\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h5\\\"><b>This Month</b></span>\",\"col\":12}},{\"id\":\"so013\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Sales\",\"col\":3}},{\"id\":\"so014\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Returns\",\"col\":3}},{\"id\":\"so015\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Purchase\",\"col\":3}},{\"id\":\"so016\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total POS Expense\",\"col\":3}},{\"id\":\"so017\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Receivable\",\"col\":3}},{\"id\":\"so018\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Payable\",\"col\":3}},{\"id\":\"so019\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Stock Value\",\"col\":3}},{\"id\":\"so020\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Out of Stock Items\",\"col\":3}},{\"id\":\"so021\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h5\\\"><b>Trends</b></span>\",\"col\":12}},{\"id\":\"so022\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Business Trend\",\"col\":12}},{\"id\":\"so023\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Payment Bifurcation\",\"col\":6}},{\"id\":\"so024\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Top Selling Item\",\"col\":6}},{\"id\":\"so025\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Top Selling Item Group\",\"col\":12}},{\"id\":\"so026\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h5\\\"><b>Documents &amp; Reports</b></span>\",\"col\":12}},{\"id\":\"so027\",\"type\":\"card\",\"data\":{\"card_name\":\"Sales\",\"col\":4}},{\"id\":\"so028\",\"type\":\"card\",\"data\":{\"card_name\":\"Purchase\",\"col\":4}},{\"id\":\"so029\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock\",\"col\":4}},{\"id\":\"so030\",\"type\":\"card\",\"data\":{\"card_name\":\"POS & Shifts\",\"col\":4}},{\"id\":\"so031\",\"type\":\"card\",\"data\":{\"card_name\":\"Sales Reports\",\"col\":4}},{\"id\":\"so032\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock & Purchase Reports\",\"col\":4}},{\"id\":\"so033\",\"type\":\"card\",\"data\":{\"card_name\":\"Offers & Setup\",\"col\":4}},{\"id\":\"so034\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Sales Invoices\",\"col\":4}}]",
+ "creation": "2026-08-27 09:00:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "retail",
+ "idx": 0,
+ "indicator_color": "blue",
+ "is_hidden": 0,
+ "label": "Store Operations",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Invoice",
+   "link_count": 0,
+   "link_to": "Sales Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Customer",
+   "link_count": 0,
+   "link_to": "Customer",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Payment Entry",
+   "link_count": 0,
+   "link_to": "Payment Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Purchase",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Purchase Invoice",
+   "link_count": 0,
+   "link_to": "Purchase Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Supplier",
+   "link_count": 0,
+   "link_to": "Supplier",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Stock",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Item",
+   "link_count": 0,
+   "link_to": "Item",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Stock Entry",
+   "link_count": 0,
+   "link_to": "Stock Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Stock Reconciliation",
+   "link_count": 0,
+   "link_to": "Stock Reconciliation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Item Price",
+   "link_count": 0,
+   "link_to": "Item Price",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS & Shifts",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Opening Shift",
+   "link_count": 0,
+   "link_to": "POS Opening Shift",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Closing Shift",
+   "link_count": 0,
+   "link_to": "POS Closing Shift",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Bank Deposits",
+   "link_count": 0,
+   "link_to": "Bank Deposits",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Profile",
+   "link_count": 0,
+   "link_to": "POS Profile",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Reports",
+   "link_count": 6,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "Sales Invoice",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Sales vs Shifts Report",
+   "link_count": 0,
+   "link_to": "Sales vs Shifts Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  },
+  {
+   "dependencies": "Sales Invoice",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Cashier Performance Report",
+   "link_count": 0,
+   "link_to": "Cashier Performance Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  },
+  {
+   "dependencies": "POS Closing Shift",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Payments and Cash Control Report",
+   "link_count": 0,
+   "link_to": "Payments and Cash Control Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "POS Closing Shift",
+   "type": "Link"
+  },
+  {
+   "dependencies": "Sales Invoice",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Top Selling Item",
+   "link_count": 0,
+   "link_to": "Top Selling Item",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  },
+  {
+   "dependencies": "Sales Invoice",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Top Selling Item Group",
+   "link_count": 0,
+   "link_to": "Top Selling Item Group",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  },
+  {
+   "dependencies": "Sales Invoice",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Accounts Receivable Summary",
+   "link_count": 0,
+   "link_to": "Accounts Receivable Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Stock & Purchase Reports",
+   "link_count": 6,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "Stock Ledger Entry",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Stock Balance",
+   "link_count": 0,
+   "link_to": "Stock Balance",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Stock Ledger Entry",
+   "type": "Link"
+  },
+  {
+   "dependencies": "Bin",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Out of Stock",
+   "link_count": 0,
+   "link_to": "Out of Stock",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Bin",
+   "type": "Link"
+  },
+  {
+   "dependencies": "Batch",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Expiry Soon",
+   "link_count": 0,
+   "link_to": "Expiry Soon",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Batch",
+   "type": "Link"
+  },
+  {
+   "dependencies": "Sales Invoice",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Inventory Impact and Fast Movers Report",
+   "link_count": 0,
+   "link_to": "Inventory Impact and Fast Movers Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  },
+  {
+   "dependencies": "Purchase Invoice",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Purchase Register",
+   "link_count": 0,
+   "link_to": "Purchase Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Purchase Invoice",
+   "type": "Link"
+  },
+  {
+   "dependencies": "Purchase Invoice",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Accounts Payable Summary",
+   "link_count": 0,
+   "link_to": "Accounts Payable Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Purchase Invoice",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Offers & Setup",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Offer",
+   "link_count": 0,
+   "link_to": "POS Offer",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Coupon",
+   "link_count": 0,
+   "link_to": "POS Coupon",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Settings",
+   "link_count": 0,
+   "link_to": "POS Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Mode of Payment",
+   "link_count": 0,
+   "link_to": "Mode of Payment",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-08-27 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "POS Next",
+ "name": "Store Operations",
+ "number_cards": [
+  {
+   "label": "Total Sales",
+   "number_card_name": "Total Sales"
+  },
+  {
+   "label": "Total Returns",
+   "number_card_name": "Total Returns"
+  },
+  {
+   "label": "Total Purchase",
+   "number_card_name": "Total Purchase"
+  },
+  {
+   "label": "Total POS Expense",
+   "number_card_name": "Total POS Expense"
+  },
+  {
+   "label": "Total Receivable",
+   "number_card_name": "Total Receivable"
+  },
+  {
+   "label": "Total Payable",
+   "number_card_name": "Total Payable"
+  },
+  {
+   "label": "Stock Value",
+   "number_card_name": "Stock Value"
+  },
+  {
+   "label": "Out of Stock Items",
+   "number_card_name": "Out of Stock Items"
+  }
+ ],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "Sales Invoice",
+   "label": "Recent Sales Invoices",
+   "quick_list_filter": "[[\"Sales Invoice\",\"is_pos\",\"=\",1]]"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 0.0,
+ "shortcuts": [
+  {
+   "color": "Green",
+   "doc_view": "",
+   "label": "Start POS",
+   "type": "URL",
+   "url": "/pos/"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "",
+   "label": "POS Day Book",
+   "link_to": "pos-day-book",
+   "type": "Page"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Sales Invoice",
+   "link_to": "Sales Invoice",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "label": "Purchase Invoice",
+   "link_to": "Purchase Invoice",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Item",
+   "link_to": "Item",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Stock Entry",
+   "link_to": "Stock Entry",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Cyan",
+   "doc_view": "List",
+   "label": "Open Shift",
+   "link_to": "POS Opening Shift",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Cyan",
+   "doc_view": "List",
+   "label": "Close Shift",
+   "link_to": "POS Closing Shift",
+   "stats_filter": "[]",
+   "type": "DocType"
+  }
+ ],
+ "title": "Store Operations"
+}
