@@ -108,11 +108,14 @@ def get_data(filters):
 	)[0][0] or 0
 
 	if due > 0:
-		data.append({
+		# The rows above come from `as_dict=True`, i.e. frappe._dict, and the code
+		# below (plus get_chart) reads them by attribute. A plain dict appended
+		# here would blow up on `d.amount`, so match the type of the SQL rows.
+		data.append(frappe._dict({
 			"mode_of_payment": "Due",
 			"amount": due,
 			"percentage": 0
-		})
+		}))
 
 		total = sum(d.amount for d in data)
 
