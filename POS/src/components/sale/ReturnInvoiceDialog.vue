@@ -1469,10 +1469,9 @@ const createReturnResource = createResource({
 			})),
 			// Flag to indicate return amount should be added to customer credit balance
 			add_to_customer_balance: addToCustomerCredit.value,
-			// Reverse the original invoice's write-off (proportional to the items being
-			// returned) so the return invoice's own accounting balances without requiring
-			// a cash/credit refund for the amount that was never actually collected.
-			write_off_amount: writeOffAmount.value > 0 ? -Math.abs(writeOffAmount.value) : 0,
+			// Makes the return invoice's own accounting balance against the actual
+			// refund/credit amount (see returnWriteOffAmount above).
+			write_off_amount: returnWriteOffAmount.value,
 			// Payment amounts are negative for refunds
 			// If addToCustomerCredit is true, send empty payments array so outstanding stays negative
 			// This negative outstanding becomes customer credit balance
@@ -1615,10 +1614,11 @@ const totalPaymentAmount = computed(() =>
 	)
 );
 
-// Share of the original invoice's write-off (e.g. change rounded down instead
-// of returned) attributable to the items being returned. A full return
-// reverses the entire write-off; a partial return reverses its proportional
-// share, so cash refund + write-off always accounts for the full item value.
+// Share of the original invoice's write-off (traditional "forgave a
+// shortfall" case) attributable to the items being returned. Purely for the
+// cashier-facing "Write-off:" breakdown line below — the actual refund
+// target (maxRefundableAmount) is driven by what was really paid, which also
+// covers the opposite case (change kept instead of given back).
 const writeOffAmount = computed(() => {
 	const originalWriteOff = originalInvoice.value?.write_off_amount || 0;
 	if (!originalInvoice.value || !originalWriteOff) return 0;
@@ -1628,22 +1628,32 @@ const writeOffAmount = computed(() => {
 	return roundCurrency(originalWriteOff * returnRatio);
 });
 
+// The amount to actually refund: the customer's proportional share of what
+// they actually paid, not the item's nominal value. A customer who paid more
+// than grand_total (change rounded up, never handed back) gets that extra
+// back on a full return, same as one who paid less (shortfall forgiven) only
+// owes what they paid.
 const maxRefundableAmount = computed(() => {
 	if (!originalInvoice.value) return 0;
-	const cashPortion = roundCurrency(returnTotal.value - writeOffAmount.value);
-	if (!isPartiallyPaid.value && !isOriginalCreditSale.value) return cashPortion;
-
 	const grandTotal = Math.abs(originalInvoice.value.grand_total) || 1;
 	const returnRatio = returnTotal.value / grandTotal;
-	return roundCurrency(Math.min(cashPortion, originalPaidAmount.value * returnRatio));
+	return roundCurrency(originalPaidAmount.value * returnRatio);
 });
 
 // Amount that goes toward credit balance (for partially paid invoices)
 const creditAdjustmentAmount = computed(() =>
-	isPartiallyPaid.value
-		? roundCurrency(Math.max(0, returnTotal.value - writeOffAmount.value - maxRefundableAmount.value))
-		: 0
+	isPartiallyPaid.value ? roundCurrency(Math.max(0, returnTotal.value - maxRefundableAmount.value)) : 0
 );
+
+// write_off_amount to submit on the return invoice itself. ERPNext's return-
+// outstanding formula only ever reverses write_off_amount for is_return
+// invoices (never change_amount), so this is the one field that can carry
+// the gap between the return's item value and what's actually being
+// refunded/credited — whichever direction that gap runs.
+const returnWriteOffAmount = computed(() => {
+	if (!originalInvoice.value) return 0;
+	return roundCurrency(maxRefundableAmount.value - returnTotal.value);
+});
 
 // Summary display helpers for the Return Summary section
 const hasWriteOff = computed(() => !isOriginalCreditSale.value && writeOffAmount.value > 0.005);
