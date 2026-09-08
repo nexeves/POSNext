@@ -1646,6 +1646,103 @@ def get_invoice(invoice_name):
 	return invoice.as_dict()
 
 
+# Must match DEFAULT_PRINT_FORMAT in POS/src/utils/printInvoice.js
+DRAFT_PRINT_DEFAULT_FORMAT = "POS Next Receipt"
+
+
+def _resolve_customer(customer):
+	"""
+	Return a valid Customer docname for `customer`, which may already be one or
+	may be a display name (older drafts stored the label rather than the id).
+	Returns None when it can't be resolved, so the caller can fall back.
+	"""
+	if not customer:
+		return None
+
+	if frappe.db.exists("Customer", customer):
+		return customer
+
+	return frappe.db.get_value("Customer", {"customer_name": customer}, "name")
+
+
+@frappe.whitelist()
+def get_draft_print_html(data):
+	"""
+	Render a not-yet-saved cart (browser draft) through the POS Profile's
+	print format, without persisting anything.
+
+	Builds an in-memory Sales Invoice so taxes/totals match what checkout
+	would produce, then renders it with Frappe's print engine.
+	"""
+	data = json.loads(data) if isinstance(data, str) else data
+
+	pos_profile = data.get("pos_profile")
+	if not pos_profile:
+		frappe.throw(_("POS Profile is required"))
+
+	# POS Settings is per-profile, not a Single doctype.
+	allow_draft_print = frappe.db.get_value(
+		DOCTYPE_POS_SETTINGS, {"pos_profile": pos_profile}, "allow_print_draft_invoices"
+	)
+	if not cint(allow_draft_print):
+		frappe.throw(_("Printing draft invoices is not allowed"), frappe.PermissionError)
+
+	items = data.get("items") or []
+	if not items:
+		frappe.throw(_("Draft has no items to print"))
+
+	pos_profile_doc = frappe.get_cached_doc("POS Profile", pos_profile)
+
+	items = [_strip_server_managed_fields(item) for item in items]
+	standardize_pricing_rules(items)
+
+	invoice_doc = frappe.get_doc(
+		{
+			"doctype": "Sales Invoice",
+			"customer": _resolve_customer(data.get("customer")) or pos_profile_doc.customer,
+			"items": items,
+			"pos_profile": pos_profile,
+			"company": pos_profile_doc.company,
+			"currency": pos_profile_doc.currency,
+			"selling_price_list": pos_profile_doc.selling_price_list,
+			"posting_date": data.get("posting_date") or nowdate(),
+			"posting_time": data.get("posting_time") or nowtime(),
+			"is_pos": 1,
+		}
+	)
+	invoice_doc.flags.ignore_permissions = True
+	frappe.flags.ignore_account_permission = True
+	invoice_doc.disable_rounded_total = 1
+	invoice_doc.set_missing_values(for_validate=True)
+	invoice_doc.calculate_taxes_and_totals()
+
+	# The doc is never saved, so it has no name. Show the draft's id instead of "None"
+	# wherever the print format prints the invoice number.
+	invoice_doc.name = data.get("draft_id") or _("Draft")
+
+	print_format_name = pos_profile_doc.get("print_format") or DRAFT_PRINT_DEFAULT_FORMAT
+	letterhead = pos_profile_doc.get("letter_head")
+
+	from frappe.www.printview import get_print_format_doc, get_print_style, get_rendered_template
+
+	meta = frappe.get_meta(invoice_doc.doctype)
+	print_format_doc = get_print_format_doc(print_format_name, meta=meta)
+
+	html = get_rendered_template(
+		doc=invoice_doc,
+		print_format=print_format_doc,
+		meta=meta,
+		no_letterhead=0 if letterhead else 1,
+		letterhead=letterhead,
+		# Bypasses Frappe's global "Print Settings > Allow Print for Draft" gate for
+		# just this render — POS Next's own allow_print_draft_invoices already gates it.
+		settings={"allow_print_for_draft": 1},
+	)
+	style = get_print_style(print_format=print_format_doc)
+
+	return {"html": html, "style": style, "print_format": print_format_name}
+
+
 @frappe.whitelist()
 def get_invoices(pos_profile: str, limit: int = 100, start: int = 0) -> list:
 	"""
