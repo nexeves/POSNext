@@ -555,6 +555,76 @@ export async function printWithSilentFallback(invoiceData, printFormat = null) {
 	}
 }
 
+/**
+ * Print a not-yet-saved cart (browser IndexedDB draft) using the real print
+ * format configured on its POS Profile. The draft has no server-side Sales
+ * Invoice yet, so the backend builds one in memory (never saved) purely to
+ * compute totals/taxes and render it through the profile's print format.
+ * Falls back to the hardcoded receipt template if that render fails
+ * (offline, misconfigured print format, etc.).
+ */
+export async function printDraftInvoice(draft) {
+	const printWindow = window.open("", "_blank", "width=350,height=600");
+	if (!printWindow) {
+		log.error("Cannot open print window — popup blocked.");
+		throw new Error(__("Popup blocked — check your browser settings."));
+	}
+
+	try {
+		const created = draft.created_at ? new Date(draft.created_at) : null;
+		const result = await call("pos_next.api.invoices.get_draft_print_html", {
+			data: JSON.stringify({
+				pos_profile: draft.pos_profile,
+				customer: draft.customer?.name || draft.customer,
+				items: draft.items,
+				draft_id: draft.draft_id,
+				// Local parts, not toISOString() — that would shift the date across timezones.
+				posting_date: created
+					? `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(
+							2,
+							"0"
+						)}-${String(created.getDate()).padStart(2, "0")}`
+					: null,
+				posting_time: created ? created.toTimeString().slice(0, 8) : null,
+			}),
+		});
+		const html = result?.html || result?.message?.html;
+		const style = result?.style || result?.message?.style || "";
+		if (!html) throw new Error("Failed to get print HTML from server");
+
+		printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>${__("Draft Invoice")}</title><style>${style}</style></head>
+<body>${html}</body>
+</html>`);
+		printWindow.document.close();
+		printWindow.onload = () => {
+			setTimeout(() => printWindow.print(), 250);
+		};
+		return true;
+	} catch (error) {
+		log.warn(
+			"Draft print-format render failed, falling back to hardcoded receipt:",
+			error?.message || error
+		);
+		printWindow.close();
+		return printInvoiceCustom({
+			name: draft.draft_id,
+			company: draft.company,
+			items: draft.items,
+			payments: [],
+			grand_total: (draft.items || []).reduce(
+				(sum, item) => sum + (Number.parseFloat(item.amount) || 0),
+				0
+			),
+			posting_date: draft.created_at,
+			customer_name: draft.customer?.customer_name || draft.customer?.name || draft.customer,
+			status: "Draft",
+			header: "Draft",
+		});
+	}
+}
+
 // ============================================================================
 // Hardcoded receipt fallback (used only when /printview popup is blocked)
 // ============================================================================
