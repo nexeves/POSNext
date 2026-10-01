@@ -556,6 +556,29 @@ export async function printWithSilentFallback(invoiceData, printFormat = null) {
 }
 
 /**
+ * Map a raw cart row (as stored in a draft) to Sales Invoice Item fields.
+ * Cart rows keep the count in `quantity` and the row's total discount in
+ * `discount_amount`; a Sales Invoice Item expects `qty` and a per-unit rate,
+ * otherwise ERPNext defaults qty to 1 and prints the undiscounted list price.
+ * Mirrors formatItemsForSubmission/computeBackendRate in useInvoice.js.
+ */
+function draftItemToInvoiceRow(item) {
+	const qty = Number.parseFloat(item.quantity ?? item.qty) || 1;
+	if (item.is_free_item) {
+		return { ...item, qty, rate: 0, price_list_rate: 0 };
+	}
+	const unitRate =
+		item.is_rate_manually_edited === 1 ? item.rate : item.price_list_rate || item.rate || 0;
+	const discountAmount = Number.parseFloat(item.discount_amount) || 0;
+	return {
+		...item,
+		qty,
+		price_list_rate: item.price_list_rate || item.rate,
+		rate: unitRate - discountAmount / qty,
+	};
+}
+
+/**
  * Print a not-yet-saved cart (browser IndexedDB draft) using the real print
  * format configured on its POS Profile. The draft has no server-side Sales
  * Invoice yet, so the backend builds one in memory (never saved) purely to
@@ -576,7 +599,7 @@ export async function printDraftInvoice(draft) {
 			data: JSON.stringify({
 				pos_profile: draft.pos_profile,
 				customer: draft.customer?.name || draft.customer,
-				items: draft.items,
+				items: (draft.items || []).map(draftItemToInvoiceRow),
 				draft_id: draft.draft_id,
 				// Local parts, not toISOString() — that would shift the date across timezones.
 				posting_date: created
