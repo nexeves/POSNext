@@ -6,6 +6,7 @@ import frappe
 from frappe import _
 
 from pos_next.api.utilities import _parse_list_parameter, check_user_company
+from frappe.utils import cint
 
 
 @frappe.whitelist()
