@@ -48,6 +48,18 @@ def set_batch_title(doc, method=None):
 	title is derived automatically ("Item Name - Item Code - Batch") instead
 	of being hand-typed and left to drift whenever the item or batch changes.
 	"""
+	if doc.get("promotional_scheme") and frappe.db.has_column(
+		"Promotional Scheme", "custom_use_item_name_only_for_pricing_rule_title"
+	):
+		use_scheme_name_only = frappe.db.get_value(
+			"Promotional Scheme",
+			doc.promotional_scheme,
+			"custom_use_item_name_only_for_pricing_rule_title",
+		)
+		if use_scheme_name_only:
+			doc.title = doc.promotional_scheme
+			return
+
 	if doc.apply_on != "Item Code" or not doc.get("items"):
 		return
 
