@@ -184,6 +184,12 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None, company=Non
 							}
 						)
 
+	# Attach batch-wise prices ({uom: rate}) so the cart can price a batch offline
+	if batch_no_data:
+		item_batch_prices = get_batch_prices([item_code], price_list).get(item_code, {})
+		for batch_row in batch_no_data:
+			batch_row["batch_prices"] = item_batch_prices.get(batch_row["batch_no"], {})
+
 	# ===========================================================================
 	# SERIAL NUMBER TRACKING: Get available serial numbers
 	# ===========================================================================
@@ -270,11 +276,13 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None, company=Non
 			"price_list_currency": item.get("price_list_currency"),
 			"plc_conversion_rate": item.get("plc_conversion_rate"),
 			"conversion_rate": item.get("conversion_rate"),
-			# batch_no isn't known yet at this stage (the batch picker hasn't run),
-			# so batch-specific Pricing Rules for the same item can tie with no
+			# batch_no is passed once the batch has been picked, so batch-wise
+			# Item Prices (MRP per batch) are matched. When it isn't known yet,
+			# batch-specific Pricing Rules for the same item can tie with no
 			# way to disambiguate. for_shopping_cart tells ERPNext to pick one
 			# instead of raising MultiplePricingRuleConflict; the real batch-aware
 			# rule is resolved later in apply_offers() once batch_no is known.
+			"batch_no": item.get("batch_no"),
 			"for_shopping_cart": 1,
 		}
 	)
@@ -322,6 +330,50 @@ def get_uom_prices(item_code, price_list):
 	)
 
 	return {p["uom"]: p["price_list_rate"] for p in prices if p["uom"]}
+
+
+def fill_scanned_item_price(item_details):
+	"""Fill zero prices on a scanned item from its own UOM's price.
+
+	ERPNext's get_item_details returns rate = 0, and price_list_rate = 0 when the
+	price exists only per batch. Use uom_prices for the item's UOM only; existing
+	non-zero prices are never changed.
+	"""
+	uom = item_details.get("uom")
+	uom_price = flt((item_details.get("uom_prices") or {}).get(uom)) if uom else 0
+
+	if not flt(item_details.get("price_list_rate")) and uom_price > 0:
+		item_details["price_list_rate"] = uom_price
+
+	price_list_rate = flt(item_details.get("price_list_rate"))
+	if not flt(item_details.get("rate")) and price_list_rate > 0:
+		item_details["rate"] = price_list_rate
+
+	return item_details
+
+
+def get_batch_prices(item_codes, price_list):
+	"""Return {item_code: {batch_no: {uom: price_list_rate}}} for batch-wise Item Prices."""
+	if not item_codes or not price_list:
+		return {}
+
+	ItemPrice = DocType("Item Price")
+	prices = (
+		frappe.qb.from_(ItemPrice)
+		.select(ItemPrice.item_code, ItemPrice.batch_no, ItemPrice.uom, ItemPrice.price_list_rate)
+		.where(ItemPrice.item_code.isin(item_codes))
+		.where(ItemPrice.price_list == price_list)
+		.where(fn.IfNull(ItemPrice.batch_no, "") != "")
+		.run(as_dict=True)
+	)
+
+	result = {}
+	for p in prices:
+		if p["uom"]:
+			result.setdefault(p["item_code"], {}).setdefault(p["batch_no"], {})[p["uom"]] = flt(
+				p["price_list_rate"]
+			)
+	return result
 
 
 @frappe.whitelist()
@@ -452,6 +504,9 @@ def search_by_barcode(barcode, pos_profile):
 
 		# Build uom_prices map (same pattern as get_items)
 		item_details["uom_prices"] = get_uom_prices(item_code, pos_profile_doc.selling_price_list)
+
+		# Give the scanned item a usable price, like grid items have
+		fill_scanned_item_price(item_details)
 
 		# Apply resolved barcode data (weighted/priced) to the item details
 		if resolved_barcode_data:
@@ -1806,7 +1861,7 @@ def get_items_count(pos_profile, item_group=None, brand=None, include_variants=0
 
 
 @frappe.whitelist()
-def get_item_details(item_code, pos_profile, customer=None, qty=1, uom=None):
+def get_item_details(item_code, pos_profile, customer=None, qty=1, uom=None, batch_no=None):
 	"""Get detailed item info including price, tax, stock"""
 	try:
 		# Parse pos_profile if it's a JSON string
@@ -1843,6 +1898,10 @@ def get_item_details(item_code, pos_profile, customer=None, qty=1, uom=None):
 		# Include UOM if provided to fetch correct price list rate
 		if uom:
 			item["uom"] = uom
+
+		# Include batch so batch-wise Item Prices (MRP per batch) are matched
+		if batch_no:
+			item["batch_no"] = batch_no
 
 		return get_item_detail(
 			item=json.dumps(item),
@@ -2351,7 +2410,7 @@ def get_product_bundle_availability(item_code, warehouse):
 
 
 @frappe.whitelist()
-def get_batch_serial_data_for_items(item_codes, warehouse):
+def get_batch_serial_data_for_items(item_codes, warehouse, price_list=None):
 	"""
 	Get batch and serial number data for multiple items (for offline caching).
 
@@ -2410,6 +2469,8 @@ def get_batch_serial_data_for_items(item_codes, warehouse):
 
 		# Fetch batch data for batch-tracked items
 		if batch_items:
+			# Batch-wise prices ({uom: rate}) so the cart can price a batch offline
+			batch_prices_map = get_batch_prices(batch_items, price_list)
 			for item_code in batch_items:
 				batch_list = get_batch_qty(warehouse=warehouse, item_code=item_code)
 				if batch_list:
@@ -2432,6 +2493,9 @@ def get_batch_serial_data_for_items(item_codes, warehouse):
 										"manufacturing_date": str(batch_doc.manufacturing_date)
 										if batch_doc.manufacturing_date
 										else None,
+										"batch_prices": batch_prices_map.get(item_code, {}).get(
+											batch.batch_no, {}
+										),
 									}
 								)
 
