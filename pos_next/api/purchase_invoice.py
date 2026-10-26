@@ -1,6 +1,23 @@
 import frappe
 
 
+def get_pricing_rule_title(row, batch_no):
+    """Pricing Rule title from a Purchase Invoice row: "Item Name - Item Code - Batch"."""
+    item_name = (
+        row.item_name
+        or frappe.get_cached_value("Item", row.item_code, "item_name")
+        or row.item_code
+    )
+    title = f"{item_name} - {row.item_code}"
+    if batch_no:
+        title += f" - {batch_no}"
+
+    # title is a Data field (140 chars)
+    if len(title) > 140:
+        title = title[:137] + "..."
+    return title
+
+
 def update_item_prices(doc, method):
     selling_price_list = "Standard Selling"
 
@@ -98,8 +115,8 @@ def update_item_pricing_rules(doc, method):
         # Pricing Rule has no direct item_code/batch fields (they live in the
         # child table), so look up the existing rule via a join instead -
         # same role the item_code/batch_no filters play for Item Price above.
-        # (title is no longer usable as a lookup key: it's auto-derived from
-        # item name/code/batch on every save, see overrides/pricing_rule.py)
+        # (title is not used as a lookup key: it's set below from the
+        # Purchase Invoice row as "Item Name - Item Code - Batch")
         existing = frappe.db.sql(
             """
             select pr.name
@@ -114,10 +131,12 @@ def update_item_pricing_rules(doc, method):
             {"company": doc.company, "item_code": row.item_code, "batch_no": batch_no or ""},
         )
         existing = existing[0][0] if existing else None
+        title = get_pricing_rule_title(row, batch_no)
 
         if existing:
             # Update existing Pricing Rule
             pricing_rule = frappe.get_doc("Pricing Rule", existing)
+            pricing_rule.title = title
             pricing_rule.discount_percentage = row.custom_discount_percentage
             pricing_rule.items = []
             pricing_rule.append("items", {"item_code": row.item_code, "custom_batch": batch_no})
@@ -126,6 +145,7 @@ def update_item_pricing_rules(doc, method):
         else:
             # Create new Pricing Rule
             pricing_rule = frappe.new_doc("Pricing Rule")
+            pricing_rule.title = title
             pricing_rule.apply_on = "Item Code"
             pricing_rule.price_or_product_discount = "Price"
             pricing_rule.selling = 1
