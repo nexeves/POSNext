@@ -44,6 +44,7 @@ async function cacheBatchSerialForItems(items, warehouse) {
 			const response = await call("pos_next.api.items.get_batch_serial_data_for_items", {
 				item_codes: JSON.stringify(batchCodes),
 				warehouse: warehouse,
+				price_list: usePOSShiftStore().currentProfile?.selling_price_list,
 			});
 
 			const data = response?.message || response || {};

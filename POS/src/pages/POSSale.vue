@@ -1880,6 +1880,12 @@ function handleItemSelected(item, autoAdd = false) {
 		uiStore.showItemSelectionDialog = true;
 		return;
 	}
+	// Batch/serial items need a batch or serial picked first, even in auto-add mode.
+	if ((item.has_batch_no && !item.batch_no) || (item.has_serial_no && !item.serial_no)) {
+		cartStore.setPendingItem(item, item.resolved_qty || 1);
+		uiStore.showBatchSerialDialog = true;
+		return;
+	}
 
 	// Auto-add mode
 	if (autoAdd) {
@@ -2373,6 +2379,14 @@ async function handleOptionSelected(option) {
 				price_list_rate: pricing.price_list_rate,
 			};
 
+			// Batch items priced only per batch (batch-wise MRP) get 0 from the
+			// lookup above because no batch is picked yet. Keep the price the
+			// dialog showed; the batch step re-prices it for the chosen batch.
+			if (itemToAdd.has_batch_no && !(pricing.price_list_rate > 0) && option.rate > 0) {
+				itemToAdd.rate = option.rate;
+				itemToAdd.price_list_rate = option.rate;
+			}
+
 			if (itemToAdd.has_batch_no || itemToAdd.has_serial_no) {
 				cartStore.setPendingItem(itemToAdd, qty);
 				uiStore.showItemSelectionDialog = false;
@@ -2539,7 +2553,7 @@ async function handleApplyOffer(offer) {
 	}
 }
 
-function handleBatchSerialSelected(batchSerial) {
+async function handleBatchSerialSelected(batchSerial) {
 	if (cartStore.pendingItem) {
 		// Use quantity from batchSerial if provided (for multiple serial numbers), otherwise use pendingItemQty
 		const qty = batchSerial.quantity || cartStore.pendingItemQty;
@@ -2549,6 +2563,20 @@ function handleBatchSerialSelected(batchSerial) {
 			...batchSerial,
 		};
 		try {
+			// Price the line for the selected batch (batch-wise MRP); keep existing price if none
+			if (batchSerial.batch_no) {
+				const pricing = await cartStore.resolveBatchPricing(
+					itemToAdd,
+					batchSerial.batch_no,
+					itemToAdd.uom || itemToAdd.stock_uom,
+					qty
+				);
+				if (pricing) {
+					itemToAdd.rate = pricing.rate;
+					itemToAdd.price_list_rate = pricing.price_list_rate;
+				}
+			}
+
 			cartStore.addItem(itemToAdd, qty, false, shiftStore.currentProfile);
 			cartStore.clearPendingItem();
 		} catch (error) {
