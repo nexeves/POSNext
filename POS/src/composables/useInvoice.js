@@ -148,6 +148,56 @@ export function useInvoice() {
 		return { rate, price_list_rate: rate };
 	}
 
+	/**
+	 * Resolve batch-wise pricing (e.g. MRP per batch) for a selected batch.
+	 * Online: fetches from server with batch_no so batch-wise Item Prices match.
+	 * Offline (or server failure): reads batch_prices from batch_no_data.
+	 * @param {Object} item - Item with item_code and batch_no_data
+	 * @param {string} batchNo - Selected batch
+	 * @param {string} uom - Item UOM
+	 * @param {number} qty - Quantity for pricing
+	 * @returns {Promise<{rate: number, price_list_rate: number}|null>} null when no price found
+	 */
+	async function resolveBatchPricing(item, batchNo, uom, qty) {
+		if (!batchNo) return null;
+
+		if (!isOffline()) {
+			try {
+				const itemDetails = await getItemDetailsResource.submit({
+					item_code: item.item_code,
+					pos_profile: posProfile.value,
+					customer: customer.value?.name || customer.value,
+					qty,
+					uom,
+					batch_no: batchNo,
+				});
+				const priceListRate = itemDetails?.price_list_rate || itemDetails?.rate;
+				if (priceListRate > 0) {
+					return {
+						rate: itemDetails.price_list_rate || itemDetails.rate,
+						price_list_rate: priceListRate,
+					};
+				}
+			} catch (err) {
+				log.warn("Server batch pricing unavailable, resolving from IndexedDB", err);
+			}
+		}
+
+		// Offline: resolve from batch_no_data (item first, then IndexedDB cache)
+		const findBatchRate = (source) => {
+			const batch = source?.batch_no_data?.find((b) => b.batch_no === batchNo);
+			const prices = batch?.batch_prices || {};
+			return prices[uom] || prices[item.stock_uom] || 0;
+		};
+
+		let rate = findBatchRate(item);
+		if (!rate) {
+			rate = findBatchRate(await getCachedItem(item.item_code));
+		}
+
+		return rate > 0 ? { rate, price_list_rate: rate } : null;
+	}
+
 	const getTaxesResource = createResource({
 		url: "pos_next.api.pos_profile.get_taxes",
 		auto: false,
@@ -1319,6 +1369,7 @@ export function useInvoice() {
 		rebuildIncrementalCache,
 		formatItemsForSubmission,
 		resolveUomPricing,
+		resolveBatchPricing,
 
 		// Resources
 		updateInvoiceResource,
