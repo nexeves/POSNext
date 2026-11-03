@@ -117,6 +117,36 @@
 								<div class="text-green-600 text-xs">{{ __("After returns") }}</div>
 							</div>
 
+							<!-- Write Off -->
+							<div
+								class="text-start bg-amber-50 border border-amber-200 rounded-lg p-3 md:p-4"
+							>
+								<div class="text-amber-600 text-xs uppercase font-medium mb-1">
+									{{ __("Write Off") }}
+								</div>
+								<div
+									class="text-lg md:text-2xl font-bold text-amber-900 mb-0.5 md:mb-1 truncate"
+								>
+									{{ formatCurrency(closingData.write_off_total || 0) }}
+								</div>
+								<div class="text-amber-600 text-xs">{{ __("Amount written off") }}</div>
+							</div>
+
+							<!-- Net Sales after Write Off -->
+							<div
+								class="text-start bg-teal-50 border border-teal-200 rounded-lg p-3 md:p-4"
+							>
+								<div class="text-teal-600 text-xs uppercase font-medium mb-1">
+									{{ __("Net After Write Off") }}
+								</div>
+								<div
+									class="text-lg md:text-2xl font-bold text-teal-900 mb-0.5 md:mb-1 truncate"
+								>
+									{{ formatCurrency(netSalesAfterWriteOff) }}
+								</div>
+								<div class="text-teal-600 text-xs">{{ __("Net sales - write off") }}</div>
+							</div>
+
 							<!-- Tax Collected -->
 							<div
 								class="text-start bg-gray-50 border border-gray-200 rounded-lg p-3 md:p-4"
@@ -1346,6 +1376,10 @@ const totalTax = computed(() => {
 const grossSales = computed(() => {
 	if (!closingData.value) return 0;
 	return closingData.value.sales_total ?? closingData.value.grand_total ?? 0;
+});
+const netSalesAfterWriteOff = computed(() => {
+	if (!closingData.value) return 0;
+	return (closingData.value.grand_total || 0) - (closingData.value.write_off_total || 0);
 });
 const totalExpenses = computed(() => {
     return closingData.value?.total_expense || 0;

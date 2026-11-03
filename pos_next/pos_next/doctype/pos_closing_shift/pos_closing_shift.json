@@ -28,6 +28,8 @@
   "section_break_13",
   "grand_total",
   "net_total",
+  "write_off_total",
+  "net_total_after_write_off",
   "total_quantity",
   "column_break_16",
   "taxes",
@@ -151,6 +153,20 @@
    "read_only": 1
   },
   {
+   "default": "0",
+   "fieldname": "write_off_total",
+   "fieldtype": "Currency",
+   "label": "Write Off Amount",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "net_total_after_write_off",
+   "fieldtype": "Currency",
+   "label": "Net Total After Write Off",
+   "read_only": 1
+  },
+  {
    "fieldname": "total_quantity",
    "fieldtype": "Float",
    "label": "Total Quantity",
@@ -200,7 +216,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-03 15:54:11.316195",
+ "modified": "2026-11-02 18:10:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Closing Shift",

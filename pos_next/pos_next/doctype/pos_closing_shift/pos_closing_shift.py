@@ -66,6 +66,23 @@ class POSClosingShift(Document):
 				title=_("Invalid Opening Entry"),
 			)
 		self.update_payment_reconciliation()
+		self.set_write_off_totals()
+
+	def set_write_off_totals(self):
+		# recompute from the linked invoices rather than trusting the posted values
+		invoices = [d.sales_invoice for d in self.pos_transactions if d.get("sales_invoice")]
+		write_off = 0
+		if invoices:
+			write_off = sum(
+				flt(v)
+				for v in frappe.get_all(
+					"Sales Invoice",
+					filters={"name": ["in", invoices], "docstatus": 1},
+					pluck="base_write_off_amount",
+				)
+			)
+		self.write_off_total = flt(write_off)
+		self.net_total_after_write_off = flt(self.grand_total) - self.write_off_total
 
 	def update_payment_reconciliation(self):
 		# update the difference values in Payment Reconciliation child table
@@ -472,21 +489,9 @@ def _process_invoice(invoice, invoice_field, company_currency, cash_mode, paymen
 	base_grand_total = get_base_value(invoice, "grand_total", "base_grand_total", conversion_rate)
 	base_net_total = get_base_value(invoice, "net_total", "base_net_total", conversion_rate)
 
-	# Credit returns with no payment rows were added to customer credit —
-	# no money entered or left the drawer.  Skip entirely.
-	if is_return and not invoice.payments:
-		return frappe._dict(
-			{
-				invoice_field: invoice.name,
-				"posting_date": invoice.posting_date,
-				"grand_total": 0,
-				"transaction_currency": invoice.get("currency") or company_currency,
-				"transaction_amount": flt(invoice.get("grand_total")),
-				"customer": invoice.customer,
-				"is_return": is_return,
-				"return_against": invoice.get("return_against"),
-			}
-		)
+	# Credit returns (no payment rows, amount added to customer credit) still
+	# reduce sales: the goods came back.  They only stay out of the payment
+	# reconciliation, which happens naturally below as there are no rows to add.
 
 	# Build transaction record
 	transaction = frappe._dict(
@@ -506,6 +511,9 @@ def _process_invoice(invoice, invoice_field, company_currency, cash_mode, paymen
 	summary["grand_total"] += base_grand_total
 	summary["net_total"] += base_net_total
 	summary["total_quantity"] += flt(invoice.total_qty)
+	summary["write_off_total"] += get_base_value(
+		invoice, "write_off_amount", "base_write_off_amount", conversion_rate
+	)
 
 	if is_return:
 		summary["returns_total"] += abs(base_grand_total)
@@ -587,6 +595,7 @@ def make_closing_shift_from_opening(opening_shift):
 		"returns_count": 0,
 		"sales_total": 0,
 		"sales_count": 0,
+		"write_off_total": 0,
 	}
 
 	# Add opening balances to payments
@@ -659,6 +668,8 @@ def make_closing_shift_from_opening(opening_shift):
 	closing_shift.grand_total = summary["grand_total"]
 	closing_shift.net_total = summary["net_total"]
 	closing_shift.total_quantity = summary["total_quantity"]
+	closing_shift.write_off_total = summary["write_off_total"]
+	closing_shift.net_total_after_write_off = summary["grand_total"] - summary["write_off_total"]
 
 	# Set child tables (without return info - that's for display only)
 	closing_shift.set(
