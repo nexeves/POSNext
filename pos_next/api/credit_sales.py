@@ -541,27 +541,44 @@ def _create_payment_entry_from_advance(invoice_doc, payment_entry_name, amount):
 	)
 
 	# Check if already allocated
-	if payment_entry.unallocated_amount < amount:
+	if flt(payment_entry.unallocated_amount) < flt(amount):
 		frappe.throw(_("Payment Entry {0} has insufficient unallocated amount").format(payment_entry_name))
 
-	# Add reference to invoice
-	payment_entry.append(
-		"references",
-		{
-			"reference_doctype": "Sales Invoice",
-			"reference_name": invoice_doc.name,
-			"total_amount": invoice_doc.grand_total,
-			"outstanding_amount": invoice_doc.outstanding_amount,
-			"allocated_amount": amount,
-		},
+	# The advance must sit in the same receivable account as the invoice
+	# if payment_entry.paid_from != invoice_doc.debit_to:
+	# 	frappe.throw(
+	# 		_("Payment Entry {0} is in account {1}, but invoice {2} uses {3}").format(
+	# 			payment_entry.name, payment_entry.paid_from, invoice_doc.name, invoice_doc.debit_to
+	# 		)
+	# 	)
+
+	# Use ERPNext's reconciliation so the reference row, Payment Ledger and the
+	# invoice's outstanding amount are all updated. Just appending a reference
+	# row and saving the submitted PE does not post any ledger entries.
+	from erpnext.accounts.utils import reconcile_against_document
+
+	reconcile_against_document(
+		[
+			frappe._dict(
+				{
+					"voucher_type": "Payment Entry",
+					"voucher_no": payment_entry.name,
+					"voucher_detail_no": None,
+					"against_voucher_type": "Sales Invoice",
+					"against_voucher": invoice_doc.name,
+					"account": payment_entry.paid_from,
+					"party_type": "Customer",
+					"party": payment_entry.party,
+					"dr_or_cr": "credit_in_account_currency",
+					"unreconciled_amount": flt(payment_entry.unallocated_amount),
+					"unadjusted_amount": flt(payment_entry.unallocated_amount),
+					"allocated_amount": flt(amount),
+					"difference_amount": 0,
+					"exchange_rate": 1,
+				}
+			)
+		]
 	)
-
-	# Recalculate unallocated amount
-	payment_entry.set_amounts()
-
-	payment_entry.flags.ignore_permissions = True
-	payment_entry.flags.ignore_validate_update_after_submit = True
-	payment_entry.save()
 
 	frappe.msgprint(_("Payment Entry {0} allocated to invoice").format(payment_entry.name), alert=True)
 

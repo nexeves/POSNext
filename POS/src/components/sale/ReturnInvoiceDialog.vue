@@ -1391,16 +1391,23 @@ const fetchInvoiceResource = createResource({
 			// Calculate payment totals from original invoice for refund handling
 			const totalPaidFromPayments =
 				origInvoice.payments?.reduce((sum, p) => sum + Math.abs(p.amount || 0), 0) || 0;
-			originalPaidAmount.value = origInvoice.paid_amount || totalPaidFromPayments || 0;
+			// Amount actually settled on the invoice by any means (cash, customer credit,
+			// advance Payment Entry). paid_amount only counts payment rows, so it is 0 for
+			// invoices paid with credit/advances.
+			const settledAmount = Math.max(
+				0,
+				Number(origInvoice.grand_total || 0) - Number(origInvoice.outstanding_amount || 0)
+			);
+			originalPaidAmount.value = Math.max(
+				Number(origInvoice.paid_amount || 0),
+				totalPaidFromPayments,
+				settledAmount
+			);
 			originalOutstandingAmount.value = origInvoice.outstanding_amount || 0;
 
-			// Detect credit sale (Pay on Account): no payments recorded OR full amount outstanding.
+			// Detect credit sale (Pay on Account): nothing settled yet.
 			// Credit sales don't require cash refund - they reverse the accounts receivable.
-			const hasNoPayments = !origInvoice.payments || origInvoice.payments.length === 0;
-			const isFullyUnpaid =
-				Math.abs(origInvoice.outstanding_amount - origInvoice.grand_total) < 0.01;
-			isOriginalCreditSale.value =
-				hasNoPayments || (totalPaidFromPayments < 0.01 && isFullyUnpaid);
+			isOriginalCreditSale.value = settledAmount < 0.01;
 
 			// Detect partial payment: some amount paid but still has outstanding balance.
 			// Partial payments require proportional refund calculation.
