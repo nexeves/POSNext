@@ -2648,10 +2648,18 @@ const totalAvailableCredit = computed(() => {
 	return roundCurrency(-customerBalance.value.net_balance);
 });
 
+// Credit that can actually be redeemed: return credit + unallocated advance
+// Payment Entries, from get_available_credit. net_balance above ignores advances.
+const redeemableCredit = computed(() =>
+	roundCurrency(
+		customerCredit.value.reduce((sum, c) => sum + Number(c.available_credit || 0), 0)
+	)
+);
+
 // Remaining credit after deducting what's already been applied as payment
 const remainingAvailableCredit = computed(() => {
 	const usedCredit = getMethodTotal("Customer Credit");
-	const remaining = totalAvailableCredit.value - usedCredit;
+	const remaining = redeemableCredit.value - usedCredit;
 	return remaining > 0 ? roundCurrency(remaining) : 0;
 });
 
@@ -3319,10 +3327,10 @@ function applyCustomerCredit() {
 		currentEntries: paymentEntries.value.length,
 	});
 
-	if (remainingAmount.value === 0 || totalAvailableCredit.value === 0) return;
+	if (remainingAmount.value <= 0 || remainingAvailableCredit.value <= 0) return;
 
-	// Calculate how much credit to apply (min of remaining amount and available credit)
-	const creditToApply = Math.min(remainingAmount.value, totalAvailableCredit.value);
+	// Calculate how much credit to apply (min of remaining amount and unused credit)
+	const creditToApply = Math.min(remainingAmount.value, remainingAvailableCredit.value);
 
 	// Add credit as a payment entry
 	paymentEntries.value.push({
